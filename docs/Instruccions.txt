@@ -1,0 +1,62 @@
+[projecte] Sessió 01: Inici del Projecte i Implementació de les Primeres Històries d'Usuari
+Requisits de compleció
+Aquesta setmana comencem el Projecte. Aquí teniu una descripció de les coses que heu de fer abans i durant la primera sessió. El treball previ s'organitza en dues parts: la preparació i la implementació de la primera història d'usuari.
+
+Abans d'implementar
+Equips
+A https://atenea.upc.edu/mod/wiki/view.php?id=5529534 trobareu la taula d'equips. Hem copiat els mateixos equips que en el cas de les presentacions, però podeu editar-la si voleu fer algun canvi. Tots els membres de l'equip han de pertànyer al mateix subgrup de matrícula, i els equips hauran de ser estables fins al final de curs.
+
+Hacker News
+Hacker News (HN) és una aplicació web real però amb un disseny minimalista, cosa que us permetrà concentrar-vos en les funcionalitats que ofereix. La idea és que construïu la vostra pròpia versió d'aquesta aplicació. Familiaritzeu-vos-hi abans de començar.
+
+Framework
+El framework recomanat per a la realització del Projecte és Ruby on Rails, però podeu utilitzar-ne un altre si es compleixen les condicions següents:
+
+Tots els membres de l'equip hi han d'estar d'acord.
+Ha de ser un framework MVC server-side que funcioni sense haver d'utilitzar d'entrada un framework client-side com React o similar. És a dir, els components de vista, controlador i model han d'estar tots al cantó servidor. Exemples d'altres frameworks que podeu utilitzar: Django (Python), Laravel (PHP), Spring (Java) o Sails.js (JavaScript server-side). Per a qualsevol altre framework, caldrà que el vostre professor ho autoritzi explícitament.
+Independentment del framework escollit, envieu un email al vostre professor (carlota.catot | carles.farre @upc.edu) indicant quin framework heu escollit. 
+
+Taiga
+Creeu un projecte públic a Taiga per fer la gestió del projecte (definir èpiques, sprints, històries d'usuari i tasques; assignar tasques, etc.). Configureu-lo i useu-lo tal com s'explica a https://atenea.upc.edu/mod/resource/view.php?id=5529538 (les transparències són semblants a les de PES, però no idèntiques; seguiu totes les instruccions).
+
+GitHub
+Creeu una organització a GitHub i, dins d'aquesta, un repositori privat on tindreu el codi i la documentació del projecte, seguint totes les instruccions de https://atenea.upc.edu/mod/resource/view.php?id=5529539 (a partir de la transparència 18; seguiu totes les instruccions).
+
+Formulari
+Ompliu el formulari següent (només una persona per equip) quan tingueu totes les dades: https://forms.gle/EzbxW1QiSb8C57Py9
+
+Implementació de la primera història d'usuari
+Heu d'implementar la primera història d'usuari de l'Sprint 1, vinculada a l'èpica "Submissions":
+
+AS a logged user I WANT to view all the submissions SO THAT I want to know what is going on
+A continuació, més instruccions.
+
+Aquesta història d'usuari implica només una pàgina: news, que hauria de tenir una aparença el més semblant possible a l'original de HN. La pàgina news, que també és l'arrel de l'aplicació, mostra submissions de diferents usuaris, ordenades de més rellevants a menys. HN calcula aquesta rellevància amb un algorisme propi; de moment, per simplificar, ordeneu-les per points.
+Es tracta de de fer una web app clàssica, és a dir, tot el contingut, tant estàtic com dinàmic, es genera al servidor web. Per tant, no s'ha d'utilitzar JavaScript per a res.
+Les submissions són creades per un usuari, que és el seu creador. Per tant, de moment tenim dues classes d'entitats (models): User i Submission. Les submissions poden ser de tipus "url" o "ask", segons com es faci el submit; ara només cal contemplar les de tipus "url" que són la majòria a la pàgina news i que corresponen a enllaços a pàgines externes. Abans d'implementar la història d'usuar, us recomanem fer l'scaffolding d'aquests dos models, tal com vau fer a la tasca #2 del waslab04, per tal de generar automàticament les corresponents Vistes, Controladors i Models que després podreu modificar per adaptar-los als vostres requisits.
+Ompliu la BD amb submissions i users, per tal de poder tenir un llistat inicial d'almenys 10 submissions amb diferents títols, users, enllaços, temps de creació i points.
+Intenteu també fer un primer desplegament a Render, Heroku o algun altre PaaS.
+Durant la Sessió 01
+Implementació de la segona història d'usuari
+Heu d'implementar la segona història d'usuari de l'Sprint 1, vinculada a l'èpica "Submissions":
+
+AS a logged user I WANT to add a new submission SO THAT I want to make my own contribution
+Aquesta història d'usuari implica quatre pàgines: submit, newest, news i ask. Han de tenir una aparença el més semblant possible a les originals de HN.
+
+Per crear una submission des de la pàgina submit (a HN la podeu veure a https://news.ycombinator.com/submit després de fer el registre/login). Les submissions són de dos tipus, depenent de si s'omple o no el camp url:
+Si s'omple el camp url amb un URI vàlid: la submission es considera de tipus "url".
+Si es deixa el camp url buit: la submission es considera de tipus "ask".
+El camp title és sempre obligatori, mentre que el camp text és opcional. Independenment del tipus, després de crear una submission amb èxit, es mostra la pàgina newest, amb la nova submission al principi de tot.
+La pàgina newest mostra les submissions ordenades per temps, de més recents a menys. També s'hi pot accedir des de l'enllaç new de la barra de menú superior.
+La pàgina news ja la teniu implementada. La pàgina ask és com la news, però només mostra les submissions de tipus ask i s'hi accedeix des de l'enllaç ask de la barra de menú superior.
+Primer lliurament del projecte
+El professor us farà la presentació dels objectius i abast del primer lliurament del projecte, que es farà el divendres 13 de novembre.
+
+To-do list
+Abans de la Sessió 01:
+Equips, framework, Taiga, GitHub i formulari.
+Implementació de la primera història d'usuari
+(Opcional) Desplegament PaaS.
+Durant la Sessió 01:
+Implementació de la segona història d'usuari.
+Darrera modificació: dijous, 15 d’octubre 2026, 18:50
