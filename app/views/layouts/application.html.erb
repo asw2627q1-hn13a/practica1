@@ -24,6 +24,10 @@
   </head>
 
   <body>
+    <%# warnings i alertes %>
+    <% if notice %><p><%= notice %></p><% end %>
+    <% if alert %><p><%= alert %></p><% end %>
+
     <%= yield %>
   </body>
 </html>
