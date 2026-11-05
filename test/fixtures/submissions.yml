@@ -1,0 +1,25 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+url_high:
+  title: A high ranked url submission
+  url: https://example.com/high
+  submission_type: url
+  points: 100
+  comments_count: 0
+  user: alice
+
+url_low:
+  title: A low ranked url submission
+  url: https://example.org/low
+  submission_type: url
+  points: 10
+  comments_count: 0
+  user: bob
+
+ask_one:
+  title: Ask HN about something
+  text: A question for the community
+  submission_type: ask
+  points: 5
+  comments_count: 0
+  user: alice

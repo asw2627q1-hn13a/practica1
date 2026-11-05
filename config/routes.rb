@@ -1,4 +1,13 @@
 Rails.application.routes.draw do
+  resources :submissions
+  resources :users
+
+  # News page (SUB-01): the app root, shows url submissions ranked by points.
+  get "news", to: "submissions#index", as: :news
+  # SUB-02 pages.
+  get "submit", to: "submissions#new", as: :submit
+  get "newest", to: "submissions#newest", as: :newest
+  get "ask", to: "submissions#ask", as: :ask
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
@@ -10,7 +19,7 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   # Defines the root path route ("/")
-  root "sessions#new" # cal canviar quan tinguem mes coses fetes
+  root "submissions#index"
   
   get "/login", to: "sessions#new", as: :login
   # GitHub OAuth

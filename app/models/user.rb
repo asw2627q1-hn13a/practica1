@@ -1,6 +1,9 @@
 class User < ApplicationRecord
+  has_many :submissions, dependent: :destroy
+
   validates :provider, :uid, presence: true
   validates :uid, uniqueness: { scope: :provider }
+  validates :username, presence: true, uniqueness: true
 
   def self.from_omniauth(auth)
     find_or_create_by!(provider: auth.provider, uid: auth.uid) do |user|

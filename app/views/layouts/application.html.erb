@@ -24,10 +24,20 @@
   </head>
 
   <body>
-    <%# warnings i alertes %>
-    <% if notice %><p><%= notice %></p><% end %>
-    <% if alert %><p><%= alert %></p><% end %>
-
-    <%= yield %>
+    <header class="hn-header">
+      <%= link_to "Hacker News", root_path %>
+      <nav class="hn-nav">
+        <%= link_to "new", newest_path %>
+        |
+        <%= link_to "ask", ask_path %>
+        |
+        <%= link_to "submit", submit_path %>
+      </nav>
+    </header>
+    <main class="hn-main">
+      <% if notice.present? %><p style="color: green"><%= notice %></p><% end %>
+      <% if alert.present? %><p style="color: red"><%= alert %></p><% end %>
+      <%= yield %>
+    </main>
   </body>
 </html>

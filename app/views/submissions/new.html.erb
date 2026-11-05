@@ -1,0 +1,35 @@
+<% content_for :title, "Submit" %>
+
+<h2 class="submit-title">Submit</h2>
+
+<%= form_with model: @submission, url: submissions_path, method: :post, class: "submit-form" do |f| %>
+  <% if @submission.errors.any? %>
+    <div class="form-errors">
+      <% @submission.errors.full_messages.each do |message| %>
+        <div><%= message %></div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :title %>
+    <%= f.text_field :title, size: 50 %>
+  </div>
+  <div class="field">
+    <%= f.label :url %>
+    <%= f.text_field :url, size: 50 %>
+  </div>
+  <div class="field">
+    <span class="field-hint">or</span>
+  </div>
+  <div class="field">
+    <%= f.label :text %>
+    <%= f.text_area :text, rows: 4, cols: 49 %>
+  </div>
+
+  <p class="field-hint">
+    Leave <em>url</em> blank to submit a question (ask); the <em>text</em> field is optional.
+  </p>
+
+  <%= f.submit "submit" %>
+<% end %>

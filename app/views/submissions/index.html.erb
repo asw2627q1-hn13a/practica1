@@ -1,0 +1,9 @@
+<% content_for :title, "Hacker News" %>
+
+<ol class="submission-list">
+  <%= render partial: "item", collection: @submissions, as: :submission %>
+</ol>
+
+<% if @submissions.empty? %>
+  <p>No submissions yet.</p>
+<% end %>
