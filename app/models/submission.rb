@@ -8,7 +8,15 @@ class Submission < ApplicationRecord
 
   # News: more relevant first. HN uses its own algorithm; for now, by points.
   scope :ranked, -> { order(points: :desc, created_at: :desc) }
+  # Newest: most recent first.
+  scope :by_time, -> { order(created_at: :desc) }
   scope :of_type, ->(type) { where(submission_type: type) }
+
+  # SUB-02: type depends on whether a url was provided.
+  # url present -> "url"; url blank -> "ask".
+  def assign_type_from_url
+    self.submission_type = url.present? ? "url" : "ask"
+  end
 
   # Domain shown next to the title on the news page (e.g. "github.com").
   def domain

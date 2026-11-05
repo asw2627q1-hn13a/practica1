@@ -7,6 +7,18 @@ class SubmissionsController < ApplicationController
     @submissions = Submission.of_type("url").ranked.includes(:user)
   end
 
+  # GET /newest (SUB-02b): all submissions, most recent first.
+  def newest
+    @submissions = Submission.by_time.includes(:user)
+    render :index
+  end
+
+  # GET /ask (SUB-02b): only ask submissions, most recent first.
+  def ask
+    @submissions = Submission.of_type("ask").by_time.includes(:user)
+    render :index
+  end
+
   # GET /submissions/1 or /submissions/1.json
   def show
   end
@@ -20,13 +32,16 @@ class SubmissionsController < ApplicationController
   def edit
   end
 
-  # POST /submissions or /submissions.json
+  # POST /submissions (SUB-02a): create a submission from the submit form.
   def create
     @submission = Submission.new(submission_params)
+    @submission.user = current_user
+    @submission.assign_type_from_url
 
     respond_to do |format|
       if @submission.save
-        format.html { redirect_to @submission, notice: "Submission was successfully created." }
+        # On success show the newest page with the new submission on top.
+        format.html { redirect_to newest_path, notice: "Submission was successfully created." }
         format.json { render :show, status: :created, location: @submission }
       else
         format.html { render :new, status: :unprocessable_content }
@@ -66,6 +81,6 @@ class SubmissionsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def submission_params
-      params.expect(submission: [ :title, :url, :text, :submission_type, :points, :user_id ])
+      params.expect(submission: [ :title, :url, :text ])
     end
 end

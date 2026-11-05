@@ -26,6 +26,13 @@
   <body>
     <header class="hn-header">
       <%= link_to "Hacker News", root_path %>
+      <nav class="hn-nav">
+        <%= link_to "new", newest_path %>
+        |
+        <%= link_to "ask", ask_path %>
+        |
+        <%= link_to "submit", submit_path %>
+      </nav>
     </header>
     <main class="hn-main">
       <% if notice.present? %><p style="color: green"><%= notice %></p><% end %>

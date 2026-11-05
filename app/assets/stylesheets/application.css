@@ -63,3 +63,23 @@ ol.submission-list li.submission {
 
 .submission-meta a:hover { text-decoration: underline; }
 
+/* SUB-02: top nav links and submit form */
+.hn-nav {
+  display: inline;
+  margin-left: 10px;
+  font-weight: normal;
+}
+
+.hn-nav a { color: #000; text-decoration: none; }
+.hn-nav a:hover { text-decoration: underline; }
+
+.submit-form .field { margin-bottom: 8px; }
+.submit-form label {
+  display: inline-block;
+  width: 50px;
+  vertical-align: top;
+}
+.field-hint { color: #828282; font-size: 11px; }
+.form-errors { color: #b00; margin-bottom: 10px; }
+
+

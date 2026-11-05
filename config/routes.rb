@@ -4,6 +4,10 @@ Rails.application.routes.draw do
 
   # News page (SUB-01): the app root, shows url submissions ranked by points.
   get "news", to: "submissions#index", as: :news
+  # SUB-02 pages.
+  get "submit", to: "submissions#new", as: :submit
+  get "newest", to: "submissions#newest", as: :newest
+  get "ask", to: "submissions#ask", as: :ask
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

@@ -20,7 +20,7 @@ submissions = [
   ["How we cut our cloud bill by 80%", "https://startup.example.com/cloud-bill", 121],
   ["Understanding Rails 8 and Solid Queue", "https://railsnews.example.com/rails-8", 89],
   ["A beginner's guide to object storage", "https://docs.example.com/object-storage", 31],
-  ["Ask HN: What are you working on this week?", "https://news.example.com/ask-week", 45],
+  ["Type-safe configuration in large codebases", "https://news.example.com/type-safe-config", 45],
   ["The best developer tools nobody talks about", "https://tools.example.com/hidden-gems", 150]
 ]
 
@@ -35,4 +35,22 @@ submissions.each_with_index do |(title, url, points), i|
   )
 end
 
-puts "Seeded #{User.count} users and #{Submission.count} submissions."
+ask_submissions = [
+  ["Ask HN: What are you working on this week?", "Share your side projects.", 45],
+  ["Ask HN: Best resources to learn Rails 8?", "Books, courses, tutorials welcome.", 28],
+  ["Ask HN: How do you stay productive working remotely?", nil, 19]
+]
+
+ask_submissions.each_with_index do |(title, text, points), i|
+  Submission.create!(
+    title: title,
+    text: text,
+    submission_type: "ask",
+    points: points,
+    user: users.sample,
+    created_at: (i * 5 + rand(1..4)).hours.ago
+  )
+end
+
+puts "Seeded #{User.count} users and #{Submission.count} submissions " \
+     "(#{Submission.of_type('url').count} url, #{Submission.of_type('ask').count} ask)."
