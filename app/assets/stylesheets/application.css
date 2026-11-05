@@ -8,3 +8,58 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+
+/* SUB-01: minimal Hacker News-like styling for the news page.
+   The full top menu and layout belong to LST-01. */
+body {
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 13px;
+  color: #000;
+  background-color: #f6f6ef;
+  margin: 0;
+}
+
+.hn-header {
+  background-color: #ff6600;
+  padding: 4px 8px;
+  font-weight: bold;
+}
+
+.hn-header a { color: #000; text-decoration: none; }
+
+.hn-main { padding: 8px; }
+
+ol.submission-list {
+  margin: 0;
+  padding-left: 28px;
+}
+
+ol.submission-list li.submission {
+  margin-bottom: 10px;
+}
+
+.submission-title a {
+  color: #000;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.submission-title a:hover { text-decoration: underline; }
+
+.submission-title .domain {
+  color: #828282;
+  font-size: 11px;
+}
+
+.submission-meta {
+  color: #828282;
+  font-size: 11px;
+}
+
+.submission-meta a {
+  color: #828282;
+  text-decoration: none;
+}
+
+.submission-meta a:hover { text-decoration: underline; }
+

@@ -24,6 +24,12 @@
   </head>
 
   <body>
-    <%= yield %>
+    <header class="hn-header">
+      <%= link_to "Hacker News", root_path %>
+    </header>
+    <main class="hn-main">
+      <% if notice.present? %><p style="color: green"><%= notice %></p><% end %>
+      <%= yield %>
+    </main>
   </body>
 </html>
