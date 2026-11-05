@@ -10,9 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_04_232115) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_05_105802) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "submissions", force: :cascade do |t|
+    t.string "title"
+    t.string "url"
+    t.text "text"
+    t.string "submission_type", default: "url", null: false
+    t.integer "points", default: 0, null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "comments_count", default: 0, null: false
+    t.index ["user_id"], name: "index_submissions_on_user_id"
+  end
 
   create_table "users", force: :cascade do |t|
     t.string "provider"
@@ -24,4 +37,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_04_232115) do
     t.datetime "updated_at", null: false
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true
   end
+
+  add_foreign_key "submissions", "users"
 end

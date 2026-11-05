@@ -19,7 +19,7 @@ class SubmissionTest < ActiveSupport::TestCase
 
   test "ranked orders by points descending" do
     assert_equal [ submissions(:url_high), submissions(:url_low) ],
-                 Submission.of_type("url").ranked.to_a
+                Submission.of_type("url").ranked.to_a
   end
 
   test "of_type filters by submission_type" do

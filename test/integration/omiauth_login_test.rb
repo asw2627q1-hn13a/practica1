@@ -6,7 +6,7 @@ class OmniauthLoginTest < ActionDispatch::IntegrationTest
     OmniAuth.config.mock_auth[:github] = OmniAuth::AuthHash.new(
       provider: "github",
       uid: "123",
-      info: { nickname: "alice", email: "alice@example.com" }
+      info: { nickname: "lkjhg", email: "lkjhg@example.com" }
     )
   end
 
@@ -29,7 +29,7 @@ class OmniauthLoginTest < ActionDispatch::IntegrationTest
     get "/auth/github/callback"
 
     user = User.find_by(provider: "github", uid: "123")
-    assert_equal "alice", user.username
-    assert_equal "alice@example.com", user.email
+    assert_equal "lkjhg", user.username
+    assert_equal "lkjhg@example.com", user.email
   end
 end
