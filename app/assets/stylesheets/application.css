@@ -82,4 +82,4 @@ ol.submission-list li.submission {
 .field-hint { color: #828282; font-size: 11px; }
 .form-errors { color: #b00; margin-bottom: 10px; }
 
-
+.hn-auth { float: right; font-weight: normal; }

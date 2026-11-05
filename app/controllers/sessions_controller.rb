@@ -14,6 +14,11 @@ class SessionsController < ApplicationController
     redirect_to(path, notice: "Sessió iniciada")  # cal millorar la notificació en un futur (de moment no desapareix)
   end
 
+  def destroy
+    reset_session
+    redirect_to root_path, notice: "Sessió tancada"
+  end
+
   def failure
     redirect_to(login_path, alert: "No s'ha pogut iniciar sessió") # cal millorar l'alerta
   end
