@@ -20,4 +20,9 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   root "submissions#index"
+  
+  get "/login", to: "sessions#new", as: :login
+  # GitHub OAuth
+  get "/auth/:provider/callback", to: "sessions#create"
+  get "/auth/failure", to: "sessions#failure"
 end

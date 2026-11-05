@@ -7,9 +7,22 @@ class ApplicationController < ActionController::Base
 
   helper_method :current_user
 
-  # TEMPORARY current_user until USR-01 (external sign in) is merged.
-  # As the team plan says, use a user from the seeds in the meantime.
+  private
+
   def current_user
-    @current_user ||= User.first
+    if session[:user_id] && !@current_user
+      @current_user = User.find_by(id: session[:user_id])
+    end
+    @current_user
+  end
+
+  def require_login
+    if current_user
+      return
+    end
+    if request.get?
+      session[:return_to] = request.fullpath
+    end
+    redirect_to login_path, alert: "Cal iniciar sessió"
   end
 end
