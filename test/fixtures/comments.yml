@@ -1,0 +1,11 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+first:
+  body: A first comment on the high submission
+  user: alice
+  submission: url_high
+
+second:
+  body: A reply-worthy second comment
+  user: bob
+  submission: url_high

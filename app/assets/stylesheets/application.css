@@ -82,4 +82,24 @@ ol.submission-list li.submission {
 .field-hint { color: #828282; font-size: 11px; }
 .form-errors { color: #b00; margin-bottom: 10px; }
 
+/* COM-01: submission detail + comments */
+.submission-text {
+  margin: 8px 0;
+  font-size: 13px;
+  max-width: 640px;
+}
+.login-hint { font-size: 12px; }
+.comment-form { margin: 10px 0 16px; }
+.comment-form textarea { font-family: Verdana, Geneva, sans-serif; }
+
+.comment-list { list-style: none; padding-left: 0; }
+.comment {
+  margin: 10px 0;
+  padding-left: 8px;
+  border-left: 2px solid #f0e8d8;
+  max-width: 640px;
+}
+.comment-meta { color: #828282; font-size: 11px; }
+.comment-body { font-size: 13px; }
+
 

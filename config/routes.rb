@@ -1,5 +1,8 @@
 Rails.application.routes.draw do
-  resources :submissions
+  resources :submissions do
+    # COM-01: add a comment to a submission.
+    resources :comments, only: :create
+  end
   resources :users
 
   # News page (SUB-01): the app root, shows url submissions ranked by points.
