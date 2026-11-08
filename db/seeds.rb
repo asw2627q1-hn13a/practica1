@@ -7,7 +7,10 @@ Submission.destroy_all
 User.destroy_all
 
 usernames = %w[pg patio11 tptacek jacquesm dang grellas cperciva tomhoward ingve luu]
-users = usernames.map { |name| User.create!(username: name) }
+# Users authenticate via an external provider (USR-01), so provider/uid are required.
+users = usernames.each_with_index.map do |name, i|
+  User.create!(username: name, provider: "seed", uid: "seed-#{i}", email: "#{name}@example.com")
+end
 
 submissions = [
   ["Show HN: I built a Rails clone of Hacker News", "https://github.com/example/hn-clone", 142],
@@ -52,5 +55,26 @@ ask_submissions.each_with_index do |(title, text, points), i|
   )
 end
 
-puts "Seeded #{User.count} users and #{Submission.count} submissions " \
-     "(#{Submission.of_type('url').count} url, #{Submission.of_type('ask').count} ask)."
+# COM-01: a few comments spread across some submissions.
+comment_bodies = [
+  "Great write-up, thanks for sharing!",
+  "I disagree with the conclusion, but interesting read.",
+  "Has anyone tried this in production?",
+  "This matches my experience exactly.",
+  "Source code would be nice.",
+  "Nitpick: the second example has a typo."
+]
+
+Submission.all.to_a.sample(6).each_with_index do |submission, i|
+  rand(1..3).times do |j|
+    submission.comments.create!(
+      user: users.sample,
+      body: comment_bodies.sample,
+      created_at: (i + j + rand(1..5)).hours.ago
+    )
+  end
+end
+
+puts "Seeded #{User.count} users, #{Submission.count} submissions " \
+     "(#{Submission.of_type('url').count} url, #{Submission.of_type('ask').count} ask) " \
+     "and #{Comment.count} comments."

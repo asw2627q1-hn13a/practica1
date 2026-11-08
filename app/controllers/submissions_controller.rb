@@ -20,7 +20,10 @@ class SubmissionsController < ApplicationController
   end
 
   # GET /submissions/1 or /submissions/1.json
+  # COM-03 will expand this; COM-01 shows the add-comment form and the comments.
   def show
+    @comment = Comment.new
+    @comments = @submission.comments.chronological.includes(:user)
   end
 
   # GET /submissions/new
