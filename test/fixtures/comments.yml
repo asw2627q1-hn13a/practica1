@@ -9,3 +9,17 @@ second:
   body: A reply-worthy second comment
   user: bob
   submission: url_high
+
+# COM-02: a reply nested under "first" (same submission).
+reply_to_first:
+  body: A reply to the first comment
+  user: bob
+  submission: url_high
+  parent: first
+
+# A top-level comment on a different submission, used to check that a reply
+# cannot cross submissions.
+on_low:
+  body: A comment on the low submission
+  user: alice
+  submission: url_low

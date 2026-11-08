@@ -102,4 +102,19 @@ ol.submission-list li.submission {
 .comment-meta { color: #828282; font-size: 11px; }
 .comment-body { font-size: 13px; }
 
+/* COM-02: nested replies and the reply link */
+.comment-actions { font-size: 11px; margin-top: 2px; }
+.reply-link { color: #828282; text-decoration: none; }
+.reply-link:hover { text-decoration: underline; }
+
+/* Indent each level of replies under its parent comment. */
+.comment-replies {
+  list-style: none;
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+.reply-page { max-width: 640px; }
+.reply-page h2 { font-size: 15px; }
+
 

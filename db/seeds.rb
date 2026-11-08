@@ -65,9 +65,10 @@ comment_bodies = [
   "Nitpick: the second example has a typo."
 ]
 
+top_level_comments = []
 Submission.all.to_a.sample(6).each_with_index do |submission, i|
   rand(1..3).times do |j|
-    submission.comments.create!(
+    top_level_comments << submission.comments.create!(
       user: users.sample,
       body: comment_bodies.sample,
       created_at: (i + j + rand(1..5)).hours.ago
@@ -75,6 +76,37 @@ Submission.all.to_a.sample(6).each_with_index do |submission, i|
   end
 end
 
+# COM-02: add nested replies (and some replies to replies) so the comment
+# tree has real depth to show.
+reply_bodies = [
+  "Good point, I hadn't thought of that.",
+  "Can you elaborate on this?",
+  "Completely agree.",
+  "That's not quite right, though.",
+  "Thanks, this was helpful."
+]
+
+top_level_comments.sample(4).each do |parent|
+  rand(1..2).times do
+    reply = parent.submission.comments.create!(
+      user: users.sample,
+      parent: parent,
+      body: reply_bodies.sample,
+      created_at: parent.created_at + rand(5..90).minutes
+    )
+    # Sometimes a reply to the reply, to reach depth > 1.
+    if rand < 0.5
+      reply.submission.comments.create!(
+        user: users.sample,
+        parent: reply,
+        body: reply_bodies.sample,
+        created_at: reply.created_at + rand(5..60).minutes
+      )
+    end
+  end
+end
+
 puts "Seeded #{User.count} users, #{Submission.count} submissions " \
      "(#{Submission.of_type('url').count} url, #{Submission.of_type('ask').count} ask) " \
-     "and #{Comment.count} comments."
+     "and #{Comment.count} comments (#{Comment.roots.count} top-level, " \
+     "#{Comment.where.not(parent_id: nil).count} replies)."

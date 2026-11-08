@@ -36,14 +36,11 @@
   <p class="login-hint"><%= link_to "Log in", login_path %> to add a comment.</p>
 <% end %>
 
+<%# COM-02: render the comments as a tree. Group every comment by its parent
+    so each level can be rendered recursively without extra queries. %>
+<% replies_by_parent = @comments.group_by(&:parent_id) %>
 <ul class="comment-list">
-  <% @comments.each do |comment| %>
-    <li class="comment">
-      <div class="comment-meta">
-        <%= comment.user.username %>
-        <%= time_ago_in_words(comment.created_at) %> ago
-      </div>
-      <div class="comment-body"><%= simple_format(comment.body) %></div>
-    </li>
+  <% (replies_by_parent[nil] || []).each do |comment| %>
+    <%= render "submissions/comment", comment: comment, replies_by_parent: replies_by_parent %>
   <% end %>
 </ul>

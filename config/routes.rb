@@ -1,7 +1,8 @@
 Rails.application.routes.draw do
   resources :submissions do
     # COM-01: add a comment to a submission.
-    resources :comments, only: :create
+    # COM-02: :new renders the reply form for a given parent comment.
+    resources :comments, only: [ :new, :create ]
   end
   resources :users
 
