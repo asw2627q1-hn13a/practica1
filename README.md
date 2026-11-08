@@ -1,3 +1,18 @@
+# Hacker News Clone — ASW 2627Q1 · equip hn13a
+
+Clon de Hacker News desenvolupat amb Ruby on Rails 8.1.
+
+## Lliurament
+
+- **Membres de l'equip:**
+  - Marc Planas Bosch
+  - _TODO: nom complet_ (`santa`)
+  - _TODO: nom complet_ (`alexblancopastor-ctrl`)
+  - _TODO: nom complet_ (`raul-guasch`)
+  - _TODO: nom complet_ (`saimonsaysclapyourhands`)
+- **Taiga:** https://tree.taiga.io/project/marc-planasbosch-asw2627q1-hn13a
+- **Aplicació desplegada (Render):** _TODO: enganxar la URL un cop desplegat_ (p. ex. `https://hackernews.onrender.com`)
+
 ## Requisits
 
 - Ruby (versió indicada a `.ruby-version` / `Dockerfile`)
@@ -90,3 +105,43 @@ Obre http://localhost:3000.
 - **`connection refused` a `localhost:5432`**: PostgreSQL no està en marxa (`docker start hn-postgres`).
 - **`password authentication failed`**: ajusta `DB_USERNAME` i `DB_PASSWORD`.
 - **El port 5432 ja està ocupat**: tens un altre PostgreSQL local; para'l o canvia el port del contenidor (`-p 5433:5432`) i defineix `DB_PORT`.
+
+## Desplegament (producció a Render)
+
+L'aplicació es desplega a [Render](https://render.com) com a **servei web + una base de dades
+PostgreSQL gestionada i separada** (*Separate Database Pattern*). La configuració viu a
+[`render.yaml`](render.yaml); Render la llegeix i crea els dos serveis automàticament.
+
+> La base de dades de producció és la de la demo. **No s'hi treballa en desenvolupament**
+> (cada membre usa la seva BD local, vegeu la secció anterior).
+
+### Primer desplegament (es fa un sol cop)
+
+1. **Branca a desplegar:** Render construeix la branca que triïs. Desplegueu **`main`**
+   (és la que s'avalua); assegureu-vos que `render.yaml` hi sigui (merge `develop` → `main`).
+2. **Crear el Blueprint:** a Render → *New +* → *Blueprint* → connecteu el repositori de GitHub
+   → trieu la branca. Render crea el web `hackernews` i la BD `hackernews-db`.
+3. **Configurar els secrets** (al dashboard de Render, estan marcats `sync: false` a `render.yaml`):
+   | Variable | Valor |
+   |---|---|
+   | `RAILS_MASTER_KEY` | contingut de `config/master.key` (fitxer local, **no** versionat) |
+   | `GITHUB_CLIENT_ID` | de l'OAuth App de GitHub (pas 4) |
+   | `GITHUB_CLIENT_SECRET` | de l'OAuth App de GitHub (pas 4) |
+
+   `DATABASE_URL` l'injecta Render automàticament des de la BD; no cal tocar-la.
+4. **OAuth App de GitHub per a producció** ([github.com/settings/developers](https://github.com/settings/developers)):
+   poseu com a *Authorization callback URL*:
+   `https://EL-VOSTRE-APP.onrender.com/auth/github/callback`
+   (la URL exacta la sabreu després del primer desplegament; actualitzeu-la llavors).
+5. **Desplegar:** Render fa `bundle install` + `assets:precompile` al build, i `db:migrate`
+   + arrencada de Puma a cada desplegament (vegeu `startCommand` a `render.yaml`).
+6. **Actualitzar aquest README** amb la URL real de l'app (secció *Lliurament*).
+
+### Notes
+
+- **Dades d'exemple:** per carregar-ne, obriu el *Shell* de Render i executeu `bin/rails db:seed`
+  **un sol cop**. ⚠️ `db:seed` fa `destroy_all`, així que esborra les dades existents.
+- **Pla gratuït:** el servei s'adorm per inactivitat. Abans d'una demo, obriu la URL ~1 min
+  abans perquè es desperti.
+- **Versió de Ruby:** Render llegeix `.ruby-version`. Si el build falla per la versió, fixeu-la
+  a la versió de Ruby suportada per Render més propera.
