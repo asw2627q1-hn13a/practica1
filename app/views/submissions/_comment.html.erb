@@ -1,0 +1,25 @@
+<%# COM-02: a single comment plus its replies, rendered recursively.
+    locals: comment, replies_by_parent (Hash of parent_id => [comments]). %>
+<li class="comment" id="comment-<%= comment.id %>">
+  <div class="comment-meta">
+    <%= comment.user.username %>
+    <%= time_ago_in_words(comment.created_at) %> ago
+  </div>
+  <div class="comment-body"><%= simple_format(comment.body) %></div>
+  <% if current_user %>
+    <div class="comment-actions">
+      <%= link_to "reply",
+        new_submission_comment_path(comment.submission_id, parent_id: comment.id),
+        class: "reply-link" %>
+    </div>
+  <% end %>
+
+  <% children = replies_by_parent[comment.id] %>
+  <% if children.present? %>
+    <ul class="comment-replies">
+      <% children.each do |reply| %>
+        <%= render "submissions/comment", comment: reply, replies_by_parent: replies_by_parent %>
+      <% end %>
+    </ul>
+  <% end %>
+</li>
