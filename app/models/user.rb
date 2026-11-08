@@ -12,4 +12,10 @@ class User < ApplicationRecord
       user.email = auth.info.email
     end
   end
+
+  # LST-01: karma shown next to the username in the top bar
+  # (sum of the user's submission points, like Hacker News).
+  def karma
+    submissions.sum(:points)
+  end
 end
