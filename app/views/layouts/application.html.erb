@@ -25,14 +25,33 @@
 
   <body>
     <header class="hn-header">
-      <%= link_to "Hacker News", root_path %>
-      <nav class="hn-nav">
-        <%= link_to "new", newest_path %>
-        |
-        <%= link_to "ask", ask_path %>
-        |
-        <%= link_to "submit", submit_path %>
-      </nav>
+      <div class="hn-bar">
+        <span class="hn-logo"><%= link_to "Y", root_path %></span>
+        <%= link_to "Hacker News", root_path, class: "hn-title" %>
+        <nav class="hn-nav">
+          <%= link_to "new", newest_path %>
+          <span class="sep">|</span>
+          <%= link_to "threads", threads_path %>
+          <span class="sep">|</span>
+          <%= link_to "comments", comments_path %>
+          <span class="sep">|</span>
+          <%= link_to "ask", ask_path %>
+          <span class="sep">|</span>
+          <%= link_to "submit", submit_path %>
+        </nav>
+        <%= form_with url: "/search", method: :get, class: "hn-search", data: { turbo: false } do |f| %>
+          <%= f.search_field :q, value: params[:q], placeholder: "search" %>
+        <% end %>
+        <span class="hn-user">
+          <% if current_user %>
+            <%= link_to "#{current_user.username} (#{current_user.karma})", user_path(current_user) %>
+            <span class="sep">|</span>
+            <%= link_to "logout", "/logout" %>
+          <% else %>
+            <%= link_to "login", login_path %>
+          <% end %>
+        </span>
+      </div>
     </header>
     <main class="hn-main">
       <% if notice.present? %><p style="color: green"><%= notice %></p><% end %>

@@ -67,4 +67,33 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     end
     assert_response :unprocessable_content
   end
+
+  # LST-03 -------------------------------------------------------------------
+
+  test "comments page lists everyone's comments without login" do
+    get comments_url
+    assert_response :success
+    assert_includes @response.body, comments(:first).body
+    assert_includes @response.body, comments(:on_low).body
+  end
+
+  # LST-02 -------------------------------------------------------------------
+
+  test "threads page requires login" do
+    get threads_url
+    assert_redirected_to login_path
+  end
+
+  test "threads page shows the user's comments and the replies they received" do
+    log_in_as(users(:alice))
+    get threads_url
+    assert_response :success
+    # alice's own comments
+    assert_includes @response.body, comments(:first).body
+    assert_includes @response.body, comments(:on_low).body
+    # a reply alice received, shown beneath her comment
+    assert_includes @response.body, comments(:reply_to_first).body
+    # another user's unrelated top-level comment is not in alice's threads
+    assert_not @response.body.include?(comments(:second).body)
+  end
 end

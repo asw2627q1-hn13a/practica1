@@ -100,48 +100,45 @@ Obre http://localhost:3000.
 
 > A Windows natiu, posa `ruby` davant de cada ordre: `ruby bin/rails server`.
 
+## Executar els tests
+
+Els tests fan servir **una base de dades pròpia**, `hacker_news_test`, diferent de la de
+desenvolupament (`hacker_news_development`). Quan algú afegeix una migració i tu fas
+`db:migrate`, només s'actualitza la de desenvolupament; la de test es queda enrere.
+
+### Primera vegada i després de cada `git pull` amb migracions noves
+
+```bash
+bin/rails db:test:prepare
+```
+
+```Windows
+ruby bin/rails db:test:prepare
+```
+
+Això crea la base de dades de test (si no existeix) i hi carrega l'esquema actual de
+`db/schema.rb`. No toca la base de dades de desenvolupament ni les seves dades.
+
+### Executar-los
+
+```bash
+bin/rails test                                                # tots els tests
+bin/rails test test/controllers/users_controller_test.rb      # un sol fitxer
+bin/rails test test/controllers/users_controller_test.rb:12   # un sol test (línia)
+```
+
+> A Windows natiu, posa `ruby` davant de cada ordre: `ruby bin/rails test`.
+
+Els tests carreguen les dades de `test/fixtures/*.yml` (usuaris `alice` i `bob`, etc.),
+no les de `db/seeds.rb`.
+
 ### Problemes habituals
 
 - **`connection refused` a `localhost:5432`**: PostgreSQL no està en marxa (`docker start hn-postgres`).
 - **`password authentication failed`**: ajusta `DB_USERNAME` i `DB_PASSWORD`.
 - **El port 5432 ja està ocupat**: tens un altre PostgreSQL local; para'l o canvia el port del contenidor (`-p 5433:5432`) i defineix `DB_PORT`.
-
-## Desplegament (producció a Render)
-
-L'aplicació es desplega a [Render](https://render.com) com a **servei web + una base de dades
-PostgreSQL gestionada i separada** (*Separate Database Pattern*). La configuració viu a
-[`render.yaml`](render.yaml); Render la llegeix i crea els dos serveis automàticament.
-
-> La base de dades de producció és la de la demo. **No s'hi treballa en desenvolupament**
-> (cada membre usa la seva BD local, vegeu la secció anterior).
-
-### Primer desplegament (es fa un sol cop)
-
-1. **Branca a desplegar:** Render construeix la branca que triïs. Desplegueu **`main`**
-   (és la que s'avalua); assegureu-vos que `render.yaml` hi sigui (merge `develop` → `main`).
-2. **Crear el Blueprint:** a Render → *New +* → *Blueprint* → connecteu el repositori de GitHub
-   → trieu la branca. Render crea el web `hackernews` i la BD `hackernews-db`.
-3. **Configurar els secrets** (al dashboard de Render, estan marcats `sync: false` a `render.yaml`):
-   | Variable | Valor |
-   |---|---|
-   | `RAILS_MASTER_KEY` | contingut de `config/master.key` (fitxer local, **no** versionat) |
-   | `GITHUB_CLIENT_ID` | de l'OAuth App de GitHub (pas 4) |
-   | `GITHUB_CLIENT_SECRET` | de l'OAuth App de GitHub (pas 4) |
-
-   `DATABASE_URL` l'injecta Render automàticament des de la BD; no cal tocar-la.
-4. **OAuth App de GitHub per a producció** ([github.com/settings/developers](https://github.com/settings/developers)):
-   poseu com a *Authorization callback URL*:
-   `https://EL-VOSTRE-APP.onrender.com/auth/github/callback`
-   (la URL exacta la sabreu després del primer desplegament; actualitzeu-la llavors).
-5. **Desplegar:** Render fa `bundle install` + `assets:precompile` al build, i `db:migrate`
-   + arrencada de Puma a cada desplegament (vegeu `startCommand` a `render.yaml`).
-6. **Actualitzar aquest README** amb la URL real de l'app (secció *Lliurament*).
-
-### Notes
-
-- **Dades d'exemple:** per carregar-ne, obriu el *Shell* de Render i executeu `bin/rails db:seed`
-  **un sol cop**. ⚠️ `db:seed` fa `destroy_all`, així que esborra les dades existents.
-- **Pla gratuït:** el servei s'adorm per inactivitat. Abans d'una demo, obriu la URL ~1 min
-  abans perquè es desperti.
-- **Versió de Ruby:** Render llegeix `.ruby-version`. Si el build falla per la versió, fixeu-la
-  a la versió de Ruby suportada per Render més propera.
+- **`Migrations are pending` en executar els tests**, tot i haver fet `db:migrate`: la base de
+  dades de test és diferent de la de desenvolupament i està desactualitzada. Executa
+  `bin/rails db:test:prepare` i torna a provar.
+- **`database "hacker_news_test" does not exist`**: el mateix, `bin/rails db:test:prepare`
+  la crea.

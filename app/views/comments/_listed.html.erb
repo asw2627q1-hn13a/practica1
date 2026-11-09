@@ -1,0 +1,10 @@
+<%# A comment shown in a flat listing (LST-02 / LST-03): author, time, text,
+    and a link to the submission it belongs to. local: comment. %>
+<li class="comment" id="comment-<%= comment.id %>">
+  <div class="comment-meta">
+    <%= link_to comment.user.username, user_path(comment.user) %>
+    <%= time_ago_in_words(comment.created_at) %> ago
+    | <%= link_to "on: #{comment.submission.title}", submission_path(comment.submission) %>
+  </div>
+  <div class="comment-body"><%= simple_format(comment.body) %></div>
+</li>

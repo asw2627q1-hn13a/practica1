@@ -12,6 +12,8 @@ class Comment < ApplicationRecord
   validate :parent_in_same_submission
 
   scope :chronological, -> { order(created_at: :asc) }
+  # Newest first (LST-02 / LST-03 listings).
+  scope :by_recent, -> { order(created_at: :desc) }
   # Top-level comments (not replies).
   scope :roots, -> { where(parent_id: nil) }
 
