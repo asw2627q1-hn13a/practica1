@@ -12,6 +12,9 @@ Rails.application.routes.draw do
   get "submit", to: "submissions#new", as: :submit
   get "newest", to: "submissions#newest", as: :newest
   get "ask", to: "submissions#ask", as: :ask
+  # LST-02 / LST-03 listing pages.
+  get "threads", to: "comments#threads", as: :threads
+  get "comments", to: "comments#index", as: :comments
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

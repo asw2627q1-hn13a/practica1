@@ -1,0 +1,34 @@
+<% content_for :title, "Threads" %>
+
+<%# LST-02: the logged-in user's comments, each with the replies it received. %>
+<ul class="comment-list">
+  <% @comments.each do |comment| %>
+    <li class="comment" id="comment-<%= comment.id %>">
+      <div class="comment-meta">
+        <%= comment.user.username %>
+        <%= time_ago_in_words(comment.created_at) %> ago
+        | <%= link_to "on: #{comment.submission.title}", submission_path(comment.submission) %>
+      </div>
+      <div class="comment-body"><%= simple_format(comment.body) %></div>
+
+      <% replies = comment.replies.chronological.includes(:user) %>
+      <% if replies.any? %>
+        <ul class="comment-replies">
+          <% replies.each do |reply| %>
+            <li class="comment" id="comment-<%= reply.id %>">
+              <div class="comment-meta">
+                <%= reply.user.username %>
+                <%= time_ago_in_words(reply.created_at) %> ago
+              </div>
+              <div class="comment-body"><%= simple_format(reply.body) %></div>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </li>
+  <% end %>
+</ul>
+
+<% if @comments.empty? %>
+  <p>You haven't commented yet.</p>
+<% end %>
