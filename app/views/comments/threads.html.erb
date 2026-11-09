@@ -5,7 +5,7 @@
   <% @comments.each do |comment| %>
     <li class="comment" id="comment-<%= comment.id %>">
       <div class="comment-meta">
-        <%= comment.user.username %>
+        <%= link_to comment.user.username, user_path(comment.user) %>
         <%= time_ago_in_words(comment.created_at) %> ago
         | <%= link_to "on: #{comment.submission.title}", submission_path(comment.submission) %>
       </div>
@@ -17,7 +17,7 @@
           <% replies.each do |reply| %>
             <li class="comment" id="comment-<%= reply.id %>">
               <div class="comment-meta">
-                <%= reply.user.username %>
+                <%= link_to comment.user.username, user_path(comment.user) %>
                 <%= time_ago_in_words(reply.created_at) %> ago
               </div>
               <div class="comment-body"><%= simple_format(reply.body) %></div>

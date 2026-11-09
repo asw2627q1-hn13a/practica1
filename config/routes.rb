@@ -25,7 +25,8 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :users
+  # USR-01 USR-02: view, edit and update user profiles
+  resources :users, only: [ :show, :edit, :update ]
 
   # News page (SUB-01): the app root, shows url submissions ranked by points.
   get "news", to: "submissions#index", as: :news

@@ -105,8 +105,45 @@ Obre http://localhost:3000.
 
 > A Windows natiu, posa `ruby` davant de cada ordre: `ruby bin/rails server`.
 
+## Executar els tests
+
+Els tests fan servir **una base de dades pròpia**, `hacker_news_test`, diferent de la de
+desenvolupament (`hacker_news_development`). Quan algú afegeix una migració i tu fas
+`db:migrate`, només s'actualitza la de desenvolupament; la de test es queda enrere.
+
+### Primera vegada i després de cada `git pull` amb migracions noves
+
+```bash
+bin/rails db:test:prepare
+```
+
+```Windows
+ruby bin/rails db:test:prepare
+```
+
+Això crea la base de dades de test (si no existeix) i hi carrega l'esquema actual de
+`db/schema.rb`. No toca la base de dades de desenvolupament ni les seves dades.
+
+### Executar-los
+
+```bash
+bin/rails test                                                # tots els tests
+bin/rails test test/controllers/users_controller_test.rb      # un sol fitxer
+bin/rails test test/controllers/users_controller_test.rb:12   # un sol test (línia)
+```
+
+> A Windows natiu, posa `ruby` davant de cada ordre: `ruby bin/rails test`.
+
+Els tests carreguen les dades de `test/fixtures/*.yml` (usuaris `alice` i `bob`, etc.),
+no les de `db/seeds.rb`.
+
 ### Problemes habituals
 
 - **`connection refused` a `localhost:5432`**: PostgreSQL no està en marxa (`docker start hn-postgres`).
 - **`password authentication failed`**: ajusta `DB_USERNAME` i `DB_PASSWORD`.
 - **El port 5432 ja està ocupat**: tens un altre PostgreSQL local; para'l o canvia el port del contenidor (`-p 5433:5432`) i defineix `DB_PORT`.
+- **`Migrations are pending` en executar els tests**, tot i haver fet `db:migrate`: la base de
+  dades de test és diferent de la de desenvolupament i està desactualitzada. Executa
+  `bin/rails db:test:prepare` i torna a provar.
+- **`database "hacker_news_test" does not exist`**: el mateix, `bin/rails db:test:prepare`
+  la crea.
