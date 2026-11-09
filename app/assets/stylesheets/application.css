@@ -186,3 +186,31 @@ ol.submission-list li.submission {
 
 .comment-meta a { color: #828282; text-decoration: none; }
 .comment-meta a:hover { text-decoration: underline; }
+
+/* USR-05: profile header (banner + overlapping avatar) */
+.profile-header {
+  position: relative;
+  max-width: 1000px;      /* remove this line for a full-width banner */
+  margin-bottom: 50px;    /* room for the part of the avatar below the banner */
+}
+
+.profile-banner {
+  display: block;
+  width: 100%;
+  height: 160px;
+  object-fit: cover;      /* crops instead of stretching */
+}
+
+.profile-avatar {
+  position: absolute;
+  left: 50%;
+  bottom: -45px;          /* how far the avatar hangs below the banner */
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: 124px;
+  height: 124px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fff;
+}
