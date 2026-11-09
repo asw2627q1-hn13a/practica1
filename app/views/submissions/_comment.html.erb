@@ -2,7 +2,7 @@
     locals: comment, replies_by_parent (Hash of parent_id => [comments]). %>
 <li class="comment" id="comment-<%= comment.id %>">
   <div class="comment-meta">
-    <%= comment.user.username %>
+    <%= link_to comment.user.username, user_path(comment.user) %>
     <%= time_ago_in_words(comment.created_at) %> ago
   </div>
   <div class="comment-body"><%= simple_format(comment.body) %></div>
