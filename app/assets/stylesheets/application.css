@@ -19,13 +19,46 @@ body {
   margin: 0;
 }
 
+/* LST-01: Hacker News-style top bar */
 .hn-header {
   background-color: #ff6600;
-  padding: 4px 8px;
-  font-weight: bold;
+  padding: 3px 6px;
 }
 
 .hn-header a { color: #000; text-decoration: none; }
+
+.hn-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.hn-logo a {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
+  text-align: center;
+  border: 1px solid #fff;
+  color: #fff;
+  font-weight: bold;
+}
+
+.hn-title { font-weight: bold; margin-right: 4px; }
+
+.sep { margin: 0 2px; }
+
+.hn-search { margin: 0 4px; display: inline-flex; }
+.hn-search input {
+  font-size: 12px;
+  padding: 1px 3px;
+  border: 1px solid #d9d9d9;
+}
+
+/* Push the login / user area to the right edge of the bar. */
+.hn-user { margin-left: auto; }
 
 .hn-main { padding: 8px; }
 
@@ -63,3 +96,62 @@ ol.submission-list li.submission {
 
 .submission-meta a:hover { text-decoration: underline; }
 
+/* SUB-02: submit form (the nav now lives in the LST-01 top bar) */
+.hn-nav { font-weight: normal; }
+.hn-nav a:hover,
+.hn-title:hover,
+.hn-user a:hover { text-decoration: underline; }
+
+.submit-form .field { margin-bottom: 8px; }
+.submit-form label {
+  display: inline-block;
+  width: 50px;
+  vertical-align: top;
+}
+.field-hint { color: #828282; font-size: 11px; }
+.form-errors { color: #b00; margin-bottom: 10px; }
+
+/* COM-01: submission detail + comments */
+.submission-text {
+  margin: 8px 0;
+  font-size: 13px;
+  max-width: 640px;
+}
+.login-hint { font-size: 12px; }
+.comment-form { margin: 10px 0 16px; }
+.comment-form textarea { font-family: Verdana, Geneva, sans-serif; }
+
+.comment-list { list-style: none; padding-left: 0; }
+.comment {
+  margin: 10px 0;
+  padding-left: 8px;
+  border-left: 2px solid #f0e8d8;
+  max-width: 640px;
+}
+.comment-meta { color: #828282; font-size: 11px; }
+.comment-body { font-size: 13px; }
+
+/* COM-02: nested replies and the reply link */
+.comment-actions { font-size: 11px; margin-top: 2px; }
+.reply-link { color: #828282; text-decoration: none; }
+.reply-link:hover { text-decoration: underline; }
+
+/* Indent each level of replies under its parent comment. */
+.comment-replies {
+  list-style: none;
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+.reply-page { max-width: 640px; }
+.reply-page h2 { font-size: 15px; }
+
+.profile-banner { width: 100%; max-width: 600px; height: 120px; object-fit: cover; display: block; }
+.profile-avatar { width: 80px; height: 80px; object-fit: cover; display: block; margin: 8px 0; }
+.profile-placeholder { background: #ddd; color: #666; font-size: 12px; text-align: center; }
+.profile-banner.profile-placeholder { line-height: 120px; }
+.profile-avatar.profile-placeholder { line-height: 80px; }
+.profile td { padding: 2px 8px 2px 0; vertical-align: top; }
+
+.comment-meta a { color: #828282; text-decoration: none; }
+.comment-meta a:hover { text-decoration: underline; }

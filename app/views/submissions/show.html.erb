@@ -1,10 +1,46 @@
-<p style="color: green"><%= notice %></p>
+<% content_for :title, @submission.title %>
 
-<%= render @submission %>
-
-<div>
-  <%= link_to "Edit this submission", edit_submission_path(@submission) %> |
-  <%= link_to "Back to submissions", submissions_path %>
-
-  <%= button_to "Destroy this submission", @submission, method: :delete %>
+<div class="submission-detail">
+  <div class="submission-title">
+    <%= link_to @submission.title, (@submission.url.presence || submission_path(@submission)) %>
+    <% if @submission.domain %>
+      <span class="domain">(<%= @submission.domain %>)</span>
+    <% end %>
+  </div>
+  <div class="submission-meta">
+    <%= pluralize(@submission.points, "point") %>
+    by <%= link_to @submission.user.username, user_path(@submission.user) %>
+    <%= time_ago_in_words(@submission.created_at) %> ago
+    | <%= pluralize(@submission.comments_count, "comment") %>
+  </div>
+  <% if @submission.text.present? %>
+    <div class="submission-text"><%= simple_format(@submission.text) %></div>
+  <% end %>
 </div>
+
+<%# COM-01: add a comment (logged-in users only). %>
+<% if current_user %>
+  <%= form_with model: [ @submission, @comment ], class: "comment-form" do |f| %>
+    <% if @comment.errors.any? %>
+      <div class="form-errors">
+        <% @comment.errors.full_messages.each do |message| %>
+          <div><%= message %></div>
+        <% end %>
+      </div>
+    <% end %>
+    <%= f.text_area :body, rows: 4, cols: 60, placeholder: "Add a comment" %>
+    <br>
+    <%= f.submit "add comment" %>
+  <% end %>
+<% else %>
+  <p class="login-hint"><%= link_to "Log in", login_path %> to add a comment.</p>
+<% end %>
+
+<%# COM-02: render the comments as a tree. Group every comment by its parent
+    so each level can be rendered recursively without extra queries. %>
+<% replies_by_parent = @comments.group_by(&:parent_id) %>
+<ul class="comment-list">
+  <% (replies_by_parent[nil] || []).each do |comment| %>
+    <%= render "submissions/comment", comment: comment, replies_by_parent: replies_by_parent %>
+  <% end %>
+</ul>

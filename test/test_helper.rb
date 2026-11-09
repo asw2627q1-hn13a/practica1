@@ -5,11 +5,27 @@ require "rails/test_help"
 module ActiveSupport
   class TestCase
     # Run tests in parallel with specified workers
-    parallelize(workers: :number_of_processors, with: :threads)
+    parallelize(workers: :number_of_processors) if Process.respond_to?(:fork)
 
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
     # Add more helper methods to be used by all tests here...
   end
+end
+
+module LoginHelper
+  def log_in_as(user)
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[user.provider.to_sym] = OmniAuth::AuthHash.new(
+      provider: user.provider,
+      uid: user.uid,
+      info: { nickname: user.username, email: user.email }
+    )
+    get "/auth/#{user.provider}/callback"
+  end
+end
+
+class ActionDispatch::IntegrationTest
+  include LoginHelper
 end

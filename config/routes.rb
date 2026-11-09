@@ -1,9 +1,22 @@
 Rails.application.routes.draw do
-  resources :submissions
-  resources :users
+  resources :submissions do
+    # COM-01: add a comment to a submission.
+    # COM-02: :new renders the reply form for a given parent comment.
+    resources :comments, only: [ :new, :create ]
+  end
+
+  # USR-01 USR-02: view, edit and update user profiles
+  resources :users, only: [ :show, :edit, :update ]
 
   # News page (SUB-01): the app root, shows url submissions ranked by points.
   get "news", to: "submissions#index", as: :news
+  # SUB-02 pages.
+  get "submit", to: "submissions#new", as: :submit
+  get "newest", to: "submissions#newest", as: :newest
+  get "ask", to: "submissions#ask", as: :ask
+  # LST-02 / LST-03 listing pages.
+  get "threads", to: "comments#threads", as: :threads
+  get "comments", to: "comments#index", as: :comments
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
@@ -16,4 +29,9 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   root "submissions#index"
+  
+  get "/login", to: "sessions#new", as: :login
+  # GitHub OAuth
+  get "/auth/:provider/callback", to: "sessions#create"
+  get "/auth/failure", to: "sessions#failure"
 end

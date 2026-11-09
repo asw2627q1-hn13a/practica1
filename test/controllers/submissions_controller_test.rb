@@ -3,6 +3,7 @@ require "test_helper"
 class SubmissionsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @submission = submissions(:url_high)
+    log_in_as(users(:alice))
   end
 
   test "should get index" do
@@ -24,12 +25,41 @@ class SubmissionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "should create submission" do
+  test "creates a url submission and redirects to newest" do
     assert_difference("Submission.count") do
-      post submissions_url, params: { submission: { points: @submission.points, submission_type: @submission.submission_type, text: @submission.text, title: @submission.title, url: @submission.url, user_id: @submission.user_id } }
+      post submissions_url, params: { submission: { title: "A brand new link", url: "https://new.example.com" } }
     end
+    created = Submission.find_by(title: "A brand new link")
+    assert_equal "url", created.submission_type
+    assert created.user.present?
+    assert_redirected_to newest_path
+  end
 
-    assert_redirected_to submission_url(Submission.last)
+  test "creates an ask submission when url is blank" do
+    assert_difference("Submission.count") do
+      post submissions_url, params: { submission: { title: "Ask: a question?", url: "", text: "details" } }
+    end
+    assert_equal "ask", Submission.find_by(title: "Ask: a question?").submission_type
+  end
+
+  test "does not create a submission without a title" do
+    assert_no_difference("Submission.count") do
+      post submissions_url, params: { submission: { title: "", url: "https://x.example.com" } }
+    end
+    assert_response :unprocessable_content
+  end
+
+  test "newest page lists ask submissions too" do
+    get newest_url
+    assert_response :success
+    assert_match(/Ask HN about something/, response.body)
+  end
+
+  test "ask page shows only ask submissions" do
+    get ask_url
+    assert_response :success
+    assert_match(/Ask HN about something/, response.body)
+    assert_no_match(/A high ranked url submission/, response.body)
   end
 
   test "should show submission" do

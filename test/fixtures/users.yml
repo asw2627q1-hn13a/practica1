@@ -2,6 +2,12 @@
 
 alice:
   username: alice
+  provider: github
+  uid: "1"
+  email: alice@example.com
 
 bob:
   username: bob
+  provider: github
+  uid: "2"
+  email: bob@example.com

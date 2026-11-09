@@ -1,0 +1,10 @@
+<% content_for :title, "Comments" %>
+
+<%# LST-03: latest comments from everyone, newest first. %>
+<ul class="comment-list">
+  <%= render partial: "comments/listed", collection: @comments, as: :comment %>
+</ul>
+
+<% if @comments.empty? %>
+  <p>No comments yet.</p>
+<% end %>

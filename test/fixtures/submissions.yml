@@ -5,7 +5,7 @@ url_high:
   url: https://example.com/high
   submission_type: url
   points: 100
-  comments_count: 0
+  comments_count: 3
   user: alice
 
 url_low:
@@ -13,7 +13,7 @@ url_low:
   url: https://example.org/low
   submission_type: url
   points: 10
-  comments_count: 0
+  comments_count: 1
   user: bob
 
 ask_one:

@@ -1,22 +1,7 @@
 <% content_for :title, "Hacker News" %>
 
 <ol class="submission-list">
-  <% @submissions.each do |submission| %>
-    <li class="submission">
-      <div class="submission-title">
-        <%= link_to submission.title, (submission.url.presence || submission_path(submission)) %>
-        <% if submission.domain %>
-          <span class="domain">(<%= submission.domain %>)</span>
-        <% end %>
-      </div>
-      <div class="submission-meta">
-        <%= pluralize(submission.points, "point") %>
-        by <%= submission.user.username %>
-        <%= time_ago_in_words(submission.created_at) %> ago
-        | <%= link_to (submission.comments_count.zero? ? "discuss" : pluralize(submission.comments_count, "comment")), submission_path(submission) %>
-      </div>
-    </li>
-  <% end %>
+  <%= render partial: "item", collection: @submissions, as: :submission %>
 </ol>
 
 <% if @submissions.empty? %>

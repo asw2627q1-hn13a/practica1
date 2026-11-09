@@ -7,7 +7,10 @@ Submission.destroy_all
 User.destroy_all
 
 usernames = %w[pg patio11 tptacek jacquesm dang grellas cperciva tomhoward ingve luu]
-users = usernames.map { |name| User.create!(username: name) }
+# Users authenticate via an external provider (USR-01), so provider/uid are required.
+users = usernames.each_with_index.map do |name, i|
+  User.create!(username: name, provider: "seed", uid: "seed-#{i}", email: "#{name}@example.com")
+end
 
 submissions = [
   ["Show HN: I built a Rails clone of Hacker News", "https://github.com/example/hn-clone", 142],
@@ -20,7 +23,7 @@ submissions = [
   ["How we cut our cloud bill by 80%", "https://startup.example.com/cloud-bill", 121],
   ["Understanding Rails 8 and Solid Queue", "https://railsnews.example.com/rails-8", 89],
   ["A beginner's guide to object storage", "https://docs.example.com/object-storage", 31],
-  ["Ask HN: What are you working on this week?", "https://news.example.com/ask-week", 45],
+  ["Type-safe configuration in large codebases", "https://news.example.com/type-safe-config", 45],
   ["The best developer tools nobody talks about", "https://tools.example.com/hidden-gems", 150]
 ]
 
@@ -35,4 +38,75 @@ submissions.each_with_index do |(title, url, points), i|
   )
 end
 
-puts "Seeded #{User.count} users and #{Submission.count} submissions."
+ask_submissions = [
+  ["Ask HN: What are you working on this week?", "Share your side projects.", 45],
+  ["Ask HN: Best resources to learn Rails 8?", "Books, courses, tutorials welcome.", 28],
+  ["Ask HN: How do you stay productive working remotely?", nil, 19]
+]
+
+ask_submissions.each_with_index do |(title, text, points), i|
+  Submission.create!(
+    title: title,
+    text: text,
+    submission_type: "ask",
+    points: points,
+    user: users.sample,
+    created_at: (i * 5 + rand(1..4)).hours.ago
+  )
+end
+
+# COM-01: a few comments spread across some submissions.
+comment_bodies = [
+  "Great write-up, thanks for sharing!",
+  "I disagree with the conclusion, but interesting read.",
+  "Has anyone tried this in production?",
+  "This matches my experience exactly.",
+  "Source code would be nice.",
+  "Nitpick: the second example has a typo."
+]
+
+top_level_comments = []
+Submission.all.to_a.sample(6).each_with_index do |submission, i|
+  rand(1..3).times do |j|
+    top_level_comments << submission.comments.create!(
+      user: users.sample,
+      body: comment_bodies.sample,
+      created_at: (i + j + rand(1..5)).hours.ago
+    )
+  end
+end
+
+# COM-02: add nested replies (and some replies to replies) so the comment
+# tree has real depth to show.
+reply_bodies = [
+  "Good point, I hadn't thought of that.",
+  "Can you elaborate on this?",
+  "Completely agree.",
+  "That's not quite right, though.",
+  "Thanks, this was helpful."
+]
+
+top_level_comments.sample(4).each do |parent|
+  rand(1..2).times do
+    reply = parent.submission.comments.create!(
+      user: users.sample,
+      parent: parent,
+      body: reply_bodies.sample,
+      created_at: parent.created_at + rand(5..90).minutes
+    )
+    # Sometimes a reply to the reply, to reach depth > 1.
+    if rand < 0.5
+      reply.submission.comments.create!(
+        user: users.sample,
+        parent: reply,
+        body: reply_bodies.sample,
+        created_at: reply.created_at + rand(5..60).minutes
+      )
+    end
+  end
+end
+
+puts "Seeded #{User.count} users, #{Submission.count} submissions " \
+     "(#{Submission.of_type('url').count} url, #{Submission.of_type('ask').count} ask) " \
+     "and #{Comment.count} comments (#{Comment.roots.count} top-level, " \
+     "#{Comment.where.not(parent_id: nil).count} replies)."
