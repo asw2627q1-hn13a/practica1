@@ -21,4 +21,8 @@
     <tr><td>created:</td><td><%= @user.created_at.strftime("%Y-%m-%d") %></td></tr>
     <tr><td>about:</td><td><%= @user.about.to_s %></td></tr>
   </table>
+
+  <% if current_user == @user %>
+    <p><%= link_to "edit profile", edit_user_path(@user) %></p>
+  <% end %>
 </div>
