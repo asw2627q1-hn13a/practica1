@@ -7,7 +7,7 @@
   </div>
   <div class="submission-meta">
     <%= pluralize(submission.points, "point") %>
-    by <%= submission.user.username %>
+    by <%= link_to submission.user.username, user_path(submission.user) %>
     <%= time_ago_in_words(submission.created_at) %> ago
     | <%= link_to (submission.comments_count.zero? ? "discuss" : pluralize(submission.comments_count, "comment")), submission_path(submission) %>
   </div>
