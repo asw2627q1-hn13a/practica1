@@ -37,4 +37,15 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to users_url
   end
+
+  test "show displays profile data without login" do
+    get user_url(@user)
+    assert_response :success
+    assert_select "td", text: @user.username
+  end
+
+  test "show returns 404 for a missing user" do
+    get user_url(id: 0)
+    assert_response :not_found
+  end
 end
