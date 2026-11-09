@@ -1,3 +1,23 @@
+## Equip
+
+| Nom i cognoms     | Usuari de GitHub |
+|-------------------|------------------|
+| Alex Blanco       | https://github.com/alexblancopastor-ctrl    |
+| Simona Duelt      | https://github.com/saimonSaysClapYourHands  |
+| Raúl Guasch       | https://github.com/Marc-PlanasBosch         |
+| Marc Planas       | https://github.com/Marc-PlanasBosch         |
+| Jan Santaliestra  | https://github.com/sSantaliestraJ           |
+
+## Gestió del projecte
+
+Seguiment del projecte (backlog, sprints i tasques) a Taiga:
+- https://tree.taiga.io/project/marc-planasbosch-asw2627q1-hn13a
+
+## Aplicació desplegada
+
+L'aplicació està desplegada a Render:
+- https://practica1-65h7.onrender.com/
+
 ## Requisits
 
 - Ruby (versió indicada a `.ruby-version` / `Dockerfile`)
