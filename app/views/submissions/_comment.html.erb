@@ -3,14 +3,38 @@
 <li class="comment" id="comment-<%= comment.id %>">
   <div class="comment-meta">
     <%= comment.user.username %>
+    <%= pluralize(comment.points, "point") %>
     <%= time_ago_in_words(comment.created_at) %> ago
   </div>
   <div class="comment-body"><%= simple_format(comment.body) %></div>
+
   <% if current_user %>
     <div class="comment-actions">
       <%= link_to "reply",
         new_submission_comment_path(comment.submission_id, parent_id: comment.id),
         class: "reply-link" %>
+
+      <%# ACT-04: vote another user's comment. %>
+      <% unless comment.owned_by?(current_user) %>
+        <% if comment.voted_by?(current_user) %>
+          <%= button_to "▲ unvote", unvote_comment_path(comment) %>
+        <% else %>
+          <%= button_to "▲ vote", upvote_comment_path(comment) %>
+        <% end %>
+      <% end %>
+
+      <%# ACT-05: favorite / un-favorite. %>
+      <% if comment.favorited_by?(current_user) %>
+        <%= button_to "un-favorite", unfavorite_comment_path(comment) %>
+      <% else %>
+        <%= button_to "favorite", favorite_comment_path(comment) %>
+      <% end %>
+
+      <%# ACT-01/02: edit and delete your own comment. %>
+      <% if comment.owned_by?(current_user) %>
+        <%= link_to "edit", edit_comment_path(comment) %>
+        <%= link_to "delete", delete_comment_path(comment) %>
+      <% end %>
     </div>
   <% end %>
 

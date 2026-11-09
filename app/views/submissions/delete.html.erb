@@ -1,0 +1,11 @@
+<% content_for :title, "Delete submission" %>
+
+<%# ACT-02: delete confirmation without JavaScript. %>
+<div class="confirm-page">
+  <h2>Delete this submission?</h2>
+  <p><strong><%= @submission.title %></strong></p>
+  <p>This also deletes its comments and can't be undone.</p>
+
+  <%= button_to "Yes, delete", submission_path(@submission), method: :delete %>
+  <%= link_to "Cancel", @submission %>
+</div>
