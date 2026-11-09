@@ -1,6 +1,17 @@
 class CommentsController < ApplicationController
-  before_action :require_login
-  before_action :set_submission
+  before_action :require_login, except: :index
+  before_action :set_submission, only: %i[ new create ]
+
+  # GET /comments (LST-03): latest comments from everyone, newest first.
+  def index
+    @comments = Comment.by_recent.includes(:user, :submission)
+  end
+
+  # GET /threads (LST-02): the logged-in user's comments, each with the
+  # replies it has received. Requires login (handled by before_action).
+  def threads
+    @comments = current_user.comments.by_recent.includes(:user, :submission)
+  end
 
   # GET /submissions/:submission_id/comments/new(?parent_id=)
   # COM-02: reply form. With a parent_id it replies to that comment; without

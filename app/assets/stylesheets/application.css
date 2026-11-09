@@ -19,13 +19,46 @@ body {
   margin: 0;
 }
 
+/* LST-01: Hacker News-style top bar */
 .hn-header {
   background-color: #ff6600;
-  padding: 4px 8px;
-  font-weight: bold;
+  padding: 3px 6px;
 }
 
 .hn-header a { color: #000; text-decoration: none; }
+
+.hn-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.hn-logo a {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
+  text-align: center;
+  border: 1px solid #fff;
+  color: #fff;
+  font-weight: bold;
+}
+
+.hn-title { font-weight: bold; margin-right: 4px; }
+
+.sep { margin: 0 2px; }
+
+.hn-search { margin: 0 4px; display: inline-flex; }
+.hn-search input {
+  font-size: 12px;
+  padding: 1px 3px;
+  border: 1px solid #d9d9d9;
+}
+
+/* Push the login / user area to the right edge of the bar. */
+.hn-user { margin-left: auto; }
 
 .hn-main { padding: 8px; }
 
@@ -63,15 +96,11 @@ ol.submission-list li.submission {
 
 .submission-meta a:hover { text-decoration: underline; }
 
-/* SUB-02: top nav links and submit form */
-.hn-nav {
-  display: inline;
-  margin-left: 10px;
-  font-weight: normal;
-}
-
-.hn-nav a { color: #000; text-decoration: none; }
-.hn-nav a:hover { text-decoration: underline; }
+/* SUB-02: submit form (the nav now lives in the LST-01 top bar) */
+.hn-nav { font-weight: normal; }
+.hn-nav a:hover,
+.hn-title:hover,
+.hn-user a:hover { text-decoration: underline; }
 
 .submit-form .field { margin-bottom: 8px; }
 .submit-form label {
