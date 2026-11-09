@@ -1,17 +1,20 @@
 <% content_for :title, "Profile: #{@user.username}" %>
 
 <div class="profile">
-  <% if @user.respond_to?(:banner) && @user.banner.attached? %>
-    <%= image_tag @user.banner, class: "profile-banner", alt: "banner" %>
-  <% else %>
+  
+  <%# !!! Treure les icones de comentari '#' quan estigui feta la part de banners i avatars (de moment peta si no estan) %>
+  
+  <%# if @user.banner.attached? %>
+    <%#= image_tag @user.banner, class: "profile-banner", alt: "banner" %>
+  <%# else %>
     <div class="profile-banner profile-placeholder">no banner</div>
-  <% end %>
+  <%# end %>
 
-  <% if @user.respond_to?(:avatar) && @user.avatar.attached? %>
-    <%= image_tag @user.avatar, class: "profile-avatar", alt: "avatar" %>
-  <% else %>
+  <%# if @user.avatar.attached? %>
+    <%#= image_tag @user.avatar, class: "profile-avatar", alt: "avatar" %>
+  <%# else %>
     <div class="profile-avatar profile-placeholder">no avatar</div>
-  <% end %>
+  <%# end %>
 
   <table>
     <tr><td>user:</td><td><%= @user.username %></td></tr>
