@@ -1,3 +1,18 @@
+# Hacker News Clone — ASW 2627Q1 · equip hn13a
+
+Clon de Hacker News desenvolupat amb Ruby on Rails 8.1.
+
+## Lliurament
+
+- **Membres de l'equip:**
+  - Marc Planas Bosch
+  - _TODO: nom complet_ (`santa`)
+  - _TODO: nom complet_ (`alexblancopastor-ctrl`)
+  - _TODO: nom complet_ (`raul-guasch`)
+  - _TODO: nom complet_ (`saimonsaysclapyourhands`)
+- **Taiga:** https://tree.taiga.io/project/marc-planasbosch-asw2627q1-hn13a
+- **Aplicació desplegada (Render):** _TODO: enganxar la URL un cop desplegat_ (p. ex. `https://hackernews.onrender.com`)
+
 ## Requisits
 
 - Ruby (versió indicada a `.ruby-version` / `Dockerfile`)
