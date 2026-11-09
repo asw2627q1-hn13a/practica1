@@ -1,22 +1,26 @@
-<%= form_with(model: user) do |form| %>
+<%= form_with model: user, class: "submit-form" do |form| %>
   <% if user.errors.any? %>
-    <div style="color: red">
-      <h2><%= pluralize(user.errors.count, "error") %> prohibited this user from being saved:</h2>
-
-      <ul>
-        <% user.errors.each do |error| %>
-          <li><%= error.full_message %></li>
-        <% end %>
-      </ul>
+    <div class="form-errors">
+      <% user.errors.full_messages.each do |message| %>
+        <div><%= message %></div>
+      <% end %>
     </div>
   <% end %>
 
-  <div>
-    <%= form.label :username, style: "display: block" %>
-    <%= form.text_field :username %>
+  <div class="field">
+    <%= form.label :user %>
+    <%= user.username %>
   </div>
 
-  <div>
-    <%= form.submit %>
+  <div class="field">
+    <%= form.label :email %>
+    <%= form.text_field :email %>
   </div>
+
+  <div class="field">
+    <%= form.label :about %>
+    <%= form.text_area :about, rows: 5, cols: 60 %>
+  </div>
+
+  <%= form.submit "update" %>
 <% end %>

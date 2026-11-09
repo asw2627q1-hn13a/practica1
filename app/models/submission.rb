@@ -1,5 +1,6 @@
 class Submission < ApplicationRecord
   belongs_to :user
+  has_many :comments, dependent: :destroy
 
   TYPES = %w[url ask].freeze
 
