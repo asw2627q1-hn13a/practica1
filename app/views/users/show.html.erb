@@ -1,10 +1,21 @@
-<p style="color: green"><%= notice %></p>
+<% content_for :title, "Profile: #{@user.username}" %>
 
-<%= render @user %>
+<div class="profile">
+  <% if @user.respond_to?(:banner) && @user.banner.attached? %>
+    <%= image_tag @user.banner, class: "profile-banner", alt: "banner" %>
+  <% else %>
+    <div class="profile-banner profile-placeholder">no banner</div>
+  <% end %>
 
-<div>
-  <%= link_to "Edit this user", edit_user_path(@user) %> |
-  <%= link_to "Back to users", users_path %>
+  <% if @user.respond_to?(:avatar) && @user.avatar.attached? %>
+    <%= image_tag @user.avatar, class: "profile-avatar", alt: "avatar" %>
+  <% else %>
+    <div class="profile-avatar profile-placeholder">no avatar</div>
+  <% end %>
 
-  <%= button_to "Destroy this user", @user, method: :delete %>
+  <table>
+    <tr><td>user:</td><td><%= @user.username %></td></tr>
+    <tr><td>created:</td><td><%= @user.created_at.strftime("%Y-%m-%d") %></td></tr>
+    <tr><td>about:</td><td><%= @user.about.to_s %></td></tr>
+  </table>
 </div>

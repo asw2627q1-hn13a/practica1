@@ -146,4 +146,12 @@ ol.submission-list li.submission {
 .reply-page { max-width: 640px; }
 .reply-page h2 { font-size: 15px; }
 
+.profile-banner { width: 100%; max-width: 600px; height: 120px; object-fit: cover; display: block; }
+.profile-avatar { width: 80px; height: 80px; object-fit: cover; display: block; margin: 8px 0; }
+.profile-placeholder { background: #ddd; color: #666; font-size: 12px; text-align: center; }
+.profile-banner.profile-placeholder { line-height: 120px; }
+.profile-avatar.profile-placeholder { line-height: 80px; }
+.profile td { padding: 2px 8px 2px 0; vertical-align: top; }
 
+.comment-meta a { color: #828282; text-decoration: none; }
+.comment-meta a:hover { text-decoration: underline; }
