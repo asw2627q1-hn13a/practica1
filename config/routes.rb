@@ -26,7 +26,15 @@ Rails.application.routes.draw do
   end
 
   # USR-01 USR-02: view, edit and update user profiles
-  resources :users, only: [ :show, :edit, :update ]
+  resources :users, only: [ :show, :edit, :update ] do
+    # USR-07: public activity listings of a user's profile. (The user's comments
+    # are shown by the existing threads page: /threads?id=<user id>.)
+    member do
+      get :submissions            # opens the "<user>'s submissions" tab
+      get :favorite_submissions   # "favorites" tab, default sub-view
+      get :favorite_comments      # "favorites" tab, comments sub-view
+    end
+  end
 
   # News page (SUB-01): the app root, shows url submissions ranked by points.
   get "news", to: "submissions#index", as: :news

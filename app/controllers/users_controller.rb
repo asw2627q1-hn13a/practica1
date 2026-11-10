@@ -7,6 +7,25 @@ class UsersController < ApplicationController
   def show
   end
 
+  # GET /users/1/submissions (USR-07): the user's submissions, newest first.
+  def submissions
+    @submissions = @user.submissions.by_time.includes(:user)
+  end
+
+  # GET /users/1/favorite_submissions (USR-07): most recently favorited first.
+  def favorite_submissions
+    @submissions = @user.favorites.where(favoritable_type: "Submission")
+                        .order(created_at: :desc, id: :desc)
+                        .includes(favoritable: :user).map(&:favoritable)
+  end
+
+  # GET /users/1/favorite_comments (USR-07): most recently favorited first.
+  def favorite_comments
+    @comments = @user.favorites.where(favoritable_type: "Comment")
+                      .order(created_at: :desc, id: :desc)
+                      .includes(favoritable: [ :user, :submission ]).map(&:favoritable)
+  end
+
   # GET /users/1/edit (USR-04)
   def edit
   end
