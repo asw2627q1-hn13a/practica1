@@ -75,4 +75,88 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
     assert_equal "alice@example.com", @alice.reload.email
   end
+
+  # USR-07
+  test "profile has the four activity links" do
+    get user_url(@alice)
+    assert_select "a[href=?]", submissions_user_path(@alice)
+    assert_select "a[href=?]", threads_path(id: @alice.id)
+    assert_select "a[href=?]", favorite_submissions_user_path(@alice)
+    assert_select "a[href=?]", favorite_comments_user_path(@alice)
+  end
+
+  test "submissions opens a new tab and lists only that user's, newest first" do
+    old = Submission.create!(title: "Alice old", url: "https://example.com/old",
+                              submission_type: "url", user: @alice, created_at: 2.days.ago)
+    get submissions_user_url(@alice)
+    assert_response :success
+    assert_select ".hn-nav a.current", text: "alice's submissions"
+    assert_match "A high ranked url submission", response.body
+    assert_match "Ask HN about something", response.body
+    assert_no_match "A low ranked url submission", response.body # bob's
+    assert response.body.index("Ask HN about something") < response.body.index(old.title)
+  end
+
+  test "threads filtered by user id is public and shows that user's comments" do
+    get threads_url(id: @alice.id)
+    assert_response :success
+    assert_select ".hn-nav a.current", text: "threads"
+    assert_match "A first comment on the high submission", response.body
+    assert_match "A reply to the first comment", response.body # reply received
+    assert_no_match "A reply-worthy second comment", response.body # bob's own comment
+  end
+
+  test "threads filtered by a missing user id is a 404" do
+    get threads_url(id: 0)
+    assert_response :not_found
+  end
+
+  test "threads without id still needs login" do
+    get threads_url
+    assert_redirected_to login_path
+  end
+
+  test "favorite submissions is the default of the favorites tab" do
+    Favorite.create!(user: @bob, favoritable: submissions(:url_high))
+    Favorite.create!(user: @bob, favoritable: comments(:first))
+    Favorite.create!(user: @alice, favoritable: submissions(:url_low))
+    get favorite_submissions_user_url(@bob)
+    assert_response :success
+    assert_select ".hn-nav a.current", text: "favorites"
+    assert_select ".favorites-nav a[href=?]", favorite_comments_user_path(@bob)
+    assert_match "A high ranked url submission", response.body
+    assert_no_match "A first comment on the high submission", response.body
+    assert_no_match "A low ranked url submission", response.body # alice's favorite
+  end
+
+  test "favorite comments shows only the user's favorite comments" do
+    Favorite.create!(user: @bob, favoritable: submissions(:url_high))
+    Favorite.create!(user: @bob, favoritable: comments(:first))
+    get favorite_comments_user_url(@bob)
+    assert_response :success
+    assert_select ".hn-nav a.current", text: "favorites"
+    assert_match "A first comment on the high submission", response.body
+    assert_no_match "Ask HN about something", response.body
+  end
+
+  test "empty activity listings show a message" do
+    carol = User.create!(username: "carol", provider: "github", uid: "3")
+    get submissions_user_url(carol)
+    assert_match "No submissions yet", response.body
+    get favorite_submissions_user_url(carol)
+    assert_match "No favorite submissions yet", response.body
+    get favorite_comments_user_url(carol)
+    assert_match "No favorite comments yet", response.body
+    get threads_url(id: carol.id)
+    assert_match "carol hasn", response.body
+  end
+
+  test "activity listings return 404 for a missing user" do
+    get submissions_user_url(id: 0)
+    assert_response :not_found
+    get favorite_submissions_user_url(id: 0)
+    assert_response :not_found
+    get favorite_comments_user_url(id: 0)
+    assert_response :not_found
+  end
 end
