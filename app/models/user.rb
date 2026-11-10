@@ -10,6 +10,9 @@ class User < ApplicationRecord
   validates :uid, uniqueness: { scope: :provider }
   validates :username, presence: true, uniqueness: true
 
+  # email is blank or follows the format "something@domain"
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
+
   def self.from_omniauth(auth)
     find_or_create_by!(provider: auth.provider, uid: auth.uid) do |user|
       user.username = auth.info.nickname
