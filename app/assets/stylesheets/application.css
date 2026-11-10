@@ -97,7 +97,7 @@ ol.submission-list li.submission {
 .submission-meta a:hover { text-decoration: underline; }
 
 /* SUB-02: submit form (the nav now lives in the LST-01 top bar) */
-.hn-nav { font-weight: normal; }
+.hn-nav { font-weight: normal; display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
 .hn-nav a:hover,
 .hn-title:hover,
 .hn-user a:hover { text-decoration: underline; }
@@ -187,3 +187,19 @@ ol.submission-list li.submission {
 
 .comment-meta a { color: #828282; text-decoration: none; }
 .comment-meta a:hover { text-decoration: underline; }
+
+/* USR-07: favorites sub-links in one row. */
+.favorites-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0;
+  font-size: 10pt;
+}
+.favorites-nav a { display: inline; width: auto; }
+/* Profile links: one per line, except the two favorites links, which share a line. */
+.profile-links { margin: 8px 0; font-size: 10pt; }
+.profile-links-row a { margin-right: 8px; }
+.favorites-nav a { color: #000; text-decoration: none; }
+.favorites-nav a:hover { text-decoration: underline; }
