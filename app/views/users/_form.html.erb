@@ -8,6 +8,22 @@
   <% end %>
 
   <div class="field">
+    <%= form.label :banner %>
+    <%= check_box_tag "remove_banner", "1", false %>
+    <%= label_tag "remove_banner", "delete" %>
+    OR
+    <%= form.file_field :banner, accept: "image/png,image/jpeg,image/gif,image/webp" %>
+  </div>
+
+  <div class="field">
+    <%= form.label :avatar %>
+    <%= check_box_tag "remove_avatar", "1", false %>
+    <%= label_tag "remove_avatar", "delete" %>
+    OR
+    <%= form.file_field :avatar, accept: "image/png,image/jpeg,image/gif,image/webp" %>
+  </div>
+
+  <div class="field">
     <%= form.label :user %>
     <%= user.username %>
   </div>
