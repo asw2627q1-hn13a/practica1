@@ -10,5 +10,6 @@
     by <%= link_to submission.user.username, user_path(submission.user) %>
     <%= time_ago_in_words(submission.created_at) %> ago
     | <%= link_to (submission.comments_count.zero? ? "discuss" : pluralize(submission.comments_count, "comment")), submission_path(submission) %>
+    <%= render "submissions/actions", submission: submission %>
   </div>
 </li>

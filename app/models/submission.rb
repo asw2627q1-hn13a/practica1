@@ -1,6 +1,10 @@
 class Submission < ApplicationRecord
   belongs_to :user
   has_many :comments, dependent: :destroy
+  # ACT-03/05/06: actions a user can take on a submission.
+  has_many :votes, as: :votable, dependent: :destroy
+  has_many :favorites, as: :favoritable, dependent: :destroy
+  has_many :hides, dependent: :destroy
 
   TYPES = %w[url ask].freeze
 
@@ -27,5 +31,22 @@ class Submission < ApplicationRecord
     host&.delete_prefix("www.")
   rescue URI::InvalidURIError
     nil
+  end
+
+  # Action-state helpers used by the views (ACT-01..06).
+  def owned_by?(a_user)
+    a_user.present? && user_id == a_user.id
+  end
+
+  def voted_by?(a_user)
+    a_user.present? && votes.exists?(user_id: a_user.id)
+  end
+
+  def favorited_by?(a_user)
+    a_user.present? && favorites.exists?(user_id: a_user.id)
+  end
+
+  def hidden_by?(a_user)
+    a_user.present? && hides.exists?(user_id: a_user.id)
   end
 end

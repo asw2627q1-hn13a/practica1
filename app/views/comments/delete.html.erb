@@ -1,0 +1,11 @@
+<% content_for :title, "Delete comment" %>
+
+<%# ACT-02: delete confirmation without JavaScript. %>
+<div class="confirm-page">
+  <h2>Delete this comment?</h2>
+  <blockquote class="comment-body"><%= simple_format(@comment.body) %></blockquote>
+  <p>This also deletes its replies and can't be undone.</p>
+
+  <%= button_to "Yes, delete", comment_path(@comment), method: :delete %>
+  <%= link_to "Cancel", submission_path(@comment.submission) %>
+</div>

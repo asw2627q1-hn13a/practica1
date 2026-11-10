@@ -1,6 +1,9 @@
 class CommentsController < ApplicationController
   before_action :require_login, except: :index
   before_action :set_submission, only: %i[ new create ]
+  before_action :set_comment, only: %i[ edit update destroy delete
+                                        upvote unvote favorite unfavorite ]
+  before_action :require_owner, only: %i[ edit update destroy delete ]
 
   # GET /comments (LST-03): latest comments from everyone, newest first.
   def index
@@ -8,21 +11,18 @@ class CommentsController < ApplicationController
   end
 
   # GET /threads (LST-02): the logged-in user's comments, each with the
-  # replies it has received. Requires login (handled by before_action).
+  # replies it has received.
   def threads
     @comments = current_user.comments.by_recent.includes(:user, :submission)
   end
 
-  # GET /submissions/:submission_id/comments/new(?parent_id=)
-  # COM-02: reply form. With a parent_id it replies to that comment; without
-  # one it is a plain top-level comment form.
+  # GET /submissions/:submission_id/comments/new(?parent_id=)  (COM-02)
   def new
     @parent = @submission.comments.find(params[:parent_id]) if params[:parent_id].present?
     @comment = @submission.comments.build(parent: @parent)
   end
 
-  # POST /submissions/:submission_id/comments
-  # COM-01 top-level comment, or COM-02 reply when comment[parent_id] is set.
+  # POST /submissions/:submission_id/comments  (COM-01 / COM-02)
   def create
     @comment = @submission.comments.build(comment_params)
     @comment.user = current_user
@@ -31,14 +31,69 @@ class CommentsController < ApplicationController
       redirect_to submission_path(@submission, anchor: "comment-#{@comment.id}"),
         notice: "Comment added."
     elsif @comment.parent_id
-      # A reply failed validation: re-render the reply form with its errors.
       @parent = @comment.parent
       render :new, status: :unprocessable_content
     else
-      # A top-level comment failed: re-render the submission page.
       @comments = @submission.comments.chronological.includes(:user)
       render "submissions/show", status: :unprocessable_content
     end
+  end
+
+  # GET /comments/:id/edit (ACT-01, owner only)
+  def edit
+  end
+
+  # PATCH/PUT /comments/:id (ACT-01, owner only)
+  def update
+    if @comment.update(edit_params)
+      redirect_to submission_path(@comment.submission, anchor: "comment-#{@comment.id}"),
+        notice: "Comment updated."
+    else
+      render :edit, status: :unprocessable_content
+    end
+  end
+
+  # GET /comments/:id/delete (ACT-02): no-JS delete confirmation page.
+  def delete
+  end
+
+  # DELETE /comments/:id (ACT-02, owner only). Replies go with it (dependent).
+  def destroy
+    submission = @comment.submission
+    @comment.destroy!
+    redirect_to submission_path(submission), notice: "Comment deleted.", status: :see_other
+  end
+
+  # POST /comments/:id/upvote (ACT-04): vote another user's comment once.
+  def upvote
+    unless @comment.owned_by?(current_user)
+      if @comment.votes.create(user: current_user).persisted?
+        @comment.increment!(:points)
+      end
+    end
+    redirect_back fallback_location: @comment.submission
+  end
+
+  # POST /comments/:id/unvote (ACT-04)
+  def unvote
+    vote = @comment.votes.find_by(user: current_user)
+    if vote
+      vote.destroy
+      @comment.decrement!(:points)
+    end
+    redirect_back fallback_location: @comment.submission
+  end
+
+  # POST /comments/:id/favorite (ACT-05)
+  def favorite
+    @comment.favorites.find_or_create_by(user: current_user)
+    redirect_back fallback_location: @comment.submission
+  end
+
+  # POST /comments/:id/unfavorite (ACT-05)
+  def unfavorite
+    @comment.favorites.where(user: current_user).destroy_all
+    redirect_back fallback_location: @comment.submission
   end
 
   private
@@ -47,7 +102,22 @@ class CommentsController < ApplicationController
     @submission = Submission.find(params[:submission_id])
   end
 
+  def set_comment
+    @comment = Comment.find(params[:id])
+  end
+
+  # ACT-01/02: only the author may edit or delete, even via a direct URL.
+  def require_owner
+    unless @comment.owned_by?(current_user)
+      redirect_to @comment.submission, alert: "You can only modify your own comments."
+    end
+  end
+
   def comment_params
     params.expect(comment: [ :body, :parent_id ])
+  end
+
+  def edit_params
+    params.expect(comment: [ :body ])
   end
 end

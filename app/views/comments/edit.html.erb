@@ -1,0 +1,20 @@
+<% content_for :title, "Edit comment" %>
+
+<div class="reply-page">
+  <h2>Edit comment</h2>
+
+  <%= form_with model: @comment, url: comment_path(@comment), method: :patch, class: "comment-form" do |f| %>
+    <% if @comment.errors.any? %>
+      <div class="form-errors">
+        <% @comment.errors.full_messages.each do |message| %>
+          <div><%= message %></div>
+        <% end %>
+      </div>
+    <% end %>
+    <%= f.text_area :body, rows: 4, cols: 60 %>
+    <br>
+    <%= f.submit "update" %>
+  <% end %>
+
+  <p><%= link_to "← back to submission", submission_path(@comment.submission) %></p>
+</div>

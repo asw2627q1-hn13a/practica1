@@ -1,6 +1,10 @@
 class User < ApplicationRecord
   has_many :submissions, dependent: :destroy
   has_many :comments, dependent: :destroy
+  # ACT-03/04/05/06: a user's actions.
+  has_many :votes, dependent: :destroy
+  has_many :favorites, dependent: :destroy
+  has_many :hides, dependent: :destroy
 
   validates :provider, :uid, presence: true
   validates :uid, uniqueness: { scope: :provider }
@@ -20,5 +24,10 @@ class User < ApplicationRecord
   # (sum of the user's submission points, like Hacker News).
   def karma
     submissions.sum(:points)
+  end
+
+  # ACT-06: submissions this user has hidden.
+  def hidden_submissions
+    Submission.where(id: hides.select(:submission_id))
   end
 end
