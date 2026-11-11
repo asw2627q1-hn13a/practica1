@@ -1,7 +1,6 @@
 <% content_for :title, "Hidden" %>
-
-<%# ACT-06: the user's hidden submissions, each with an unhide action. %>
-<h2>Hidden submissions</h2>
+<%# ACT-06 / USR-08: extra top-bar tab, next to "submit"; each submission has an unhide action. %>
+<% content_for :nav_extra, link_to("hidden submissions", hidden_path, class: "current") %>
 
 <ol class="submission-list">
   <%= render partial: "item", collection: @submissions, as: :submission %>

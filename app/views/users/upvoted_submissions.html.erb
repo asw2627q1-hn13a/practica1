@@ -1,0 +1,13 @@
+<% content_for :title, "Upvoted" %>
+<%# USR-08: "upvoted" tab in the top bar; default sub-view: submissions. %>
+<% content_for :nav_extra, link_to("upvoted", upvoted_path, class: "current") %>
+
+<%= render "users/upvoted_nav", current: :submissions %>
+
+<ol class="submission-list">
+  <%= render partial: "submissions/item", collection: @submissions, as: :submission %>
+</ol>
+
+<% if @submissions.empty? %>
+  <p>No upvoted submissions.</p>
+<% end %>

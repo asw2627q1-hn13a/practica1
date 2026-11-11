@@ -1,0 +1,5 @@
+<p class="favorites-nav">
+  <%= link_to "submissions", upvoted_path, class: ("current" if current == :submissions) %>
+  <span class="sep">|</span>
+  <%= link_to "comments", upvoted_comments_path, class: ("current" if current == :comments) %>
+</p>
