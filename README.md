@@ -4,7 +4,7 @@
 |-------------------|------------------|
 | Alex Blanco       | https://github.com/alexblancopastor-ctrl    |
 | Simona Duelt      | https://github.com/saimonSaysClapYourHands  |
-| Raúl Guasch       | https://github.com/Marc-PlanasBosch         |
+| Raúl Guasch       | https://github.com/raul-guasch              |
 | Marc Planas       | https://github.com/Marc-PlanasBosch         |
 | Jan Santaliestra  | https://github.com/sSantaliestraJ           |
 

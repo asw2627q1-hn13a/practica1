@@ -84,4 +84,29 @@ class SubmissionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to root_path
   end
+
+  # SUB-03 -------------------------------------------------------------------
+
+  test "does not create a submission with an invalid url" do
+    assert_no_difference("Submission.count") do
+      post submissions_url, params: { submission: { title: "Bad url", url: "not-a-url" } }
+    end
+    assert_response :unprocessable_content
+  end
+
+  # SUB-04 -------------------------------------------------------------------
+
+  test "a duplicate url shows the existing submission instead of creating one" do
+    existing = submissions(:url_high)
+    assert_no_difference("Submission.count") do
+      post submissions_url, params: { submission: { title: "Different title, same url", url: existing.url } }
+    end
+    assert_redirected_to existing
+  end
+
+  test "ask submissions are not affected by the duplicate-url check" do
+    assert_difference("Submission.count", 1) do
+      post submissions_url, params: { submission: { title: "Another ask", url: "", text: "details" } }
+    end
+  end
 end

@@ -1,5 +1,8 @@
 class CommentsController < ApplicationController
-  before_action :require_login, except: :index
+  # threads is public when filtered by a user id (USR-07: /threads?id=<user id>);
+  # without id it shows the logged-in user's own threads and needs login.
+  before_action :require_login, except: %i[ index threads ]
+  before_action :require_login_unless_filtered, only: :threads
   before_action :set_submission, only: %i[ new create ]
   before_action :set_comment, only: %i[ edit update destroy delete
                                         upvote unvote favorite unfavorite ]
@@ -10,10 +13,12 @@ class CommentsController < ApplicationController
     @comments = Comment.by_recent.includes(:user, :submission)
   end
 
-  # GET /threads (LST-02): the logged-in user's comments, each with the
-  # replies it has received.
+  # GET /threads (LST-02): a user's comments, each with the replies it has
+  # received. USR-07: ?id=<user id> picks the user (404 if it doesn't exist);
+  # without it, it is the logged-in user.
   def threads
-    @comments = current_user.comments.by_recent.includes(:user, :submission)
+    @threads_user = params[:id].present? ? User.find(params[:id]) : current_user
+    @comments = @threads_user.comments.by_recent.includes(:user, :submission)
   end
 
   # GET /submissions/:submission_id/comments/new(?parent_id=)  (COM-02)
@@ -97,6 +102,10 @@ class CommentsController < ApplicationController
   end
 
   private
+
+  def require_login_unless_filtered
+    require_login unless params[:id].present?
+  end
 
   def set_submission
     @submission = Submission.find(params[:submission_id])

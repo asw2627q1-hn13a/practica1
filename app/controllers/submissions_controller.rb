@@ -49,6 +49,17 @@ class SubmissionsController < ApplicationController
     @submission.user = current_user
     @submission.assign_type_from_url
 
+    # SUB-04: if a submission with this url already exists, show it instead of
+    # creating a duplicate (even if the title differs). Ask submissions, which
+    # have no url, are never affected by this check.
+    if @submission.url.present?
+      existing = Submission.find_by(url: @submission.url)
+      if existing
+        redirect_to existing, notice: "This URL has already been submitted."
+        return
+      end
+    end
+
     respond_to do |format|
       if @submission.save
         format.html { redirect_to newest_path, notice: "Submission was successfully created." }

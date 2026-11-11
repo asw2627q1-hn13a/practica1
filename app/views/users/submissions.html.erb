@@ -1,0 +1,11 @@
+<% content_for :title, "#{@user.username}'s submissions" %>
+<%# USR-07: extra top-bar tab, next to "submit". %>
+<% content_for :nav_extra, link_to("#{@user.username}'s submissions", submissions_user_path(@user), class: "current") %>
+
+<ol class="submission-list">
+  <%= render partial: "submissions/item", collection: @submissions, as: :submission %>
+</ol>
+
+<% if @submissions.empty? %>
+  <p>No submissions yet.</p>
+<% end %>

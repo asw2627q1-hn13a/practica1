@@ -1,6 +1,6 @@
 <% content_for :title, "Threads" %>
 
-<%# LST-02: the logged-in user's comments, each with the replies it received. %>
+<%# LST-02: a user's comments (USR-07: ?id= filters by user; default the logged-in user), each with the replies it received. %>
 <ul class="comment-list">
   <% @comments.each do |comment| %>
     <li class="comment" id="comment-<%= comment.id %>">
@@ -17,7 +17,7 @@
           <% replies.each do |reply| %>
             <li class="comment" id="comment-<%= reply.id %>">
               <div class="comment-meta">
-                <%= link_to comment.user.username, user_path(comment.user) %>
+                <%= link_to reply.user.username, user_path(reply.user) %>
                 <%= time_ago_in_words(reply.created_at) %> ago
               </div>
               <div class="comment-body"><%= simple_format(reply.body) %></div>
@@ -30,5 +30,5 @@
 </ul>
 
 <% if @comments.empty? %>
-  <p>You haven't commented yet.</p>
+  <p><%= @threads_user == current_user ? "You haven't commented yet." : "#{@threads_user.username} hasn't commented yet." %></p>
 <% end %>

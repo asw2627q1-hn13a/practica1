@@ -1,0 +1,18 @@
+<% content_for :title, "Upvoted" %>
+<%# USR-08: "upvoted" tab in the top bar; sub-view: comments. %>
+<% content_for :nav_extra, link_to("upvoted", upvoted_path, class: "current") %>
+
+<%= render "users/upvoted_nav", current: :comments %>
+
+<ul class="comment-list">
+  <% @comments.each do |comment| %>
+    <%= render "comments/listed", comment: comment %>
+    <div class="comment-actions">
+      <%= button_to "▲ unvote", unvote_comment_path(comment) %>
+    </div>
+  <% end %>
+</ul>
+
+<% if @comments.empty? %>
+  <p>No upvoted comments.</p>
+<% end %>

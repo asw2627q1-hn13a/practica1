@@ -1,0 +1,5 @@
+<p class="favorites-nav">
+  <%= link_to "submissions", favorite_submissions_user_path(user), class: ("current" if current == :submissions) %>
+  <span class="sep">|</span>
+  <%= link_to "comments", favorite_comments_user_path(user), class: ("current" if current == :comments) %>
+</p>
