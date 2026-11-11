@@ -16,6 +16,9 @@ class Submission < ApplicationRecord
   # Newest: most recent first.
   scope :by_time, -> { order(created_at: :desc) }
   scope :of_type, ->(type) { where(submission_type: type) }
+  scope :search_by_title, ->(query) {
+    where("LOWER(title) LIKE ?", "%#{sanitize_sql_like(query.downcase)}%")
+  }
 
   # SUB-02: type depends on whether a url was provided.
   # url present -> "url"; url blank -> "ask".
