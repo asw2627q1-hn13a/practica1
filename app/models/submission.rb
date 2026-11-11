@@ -36,16 +36,6 @@ class Submission < ApplicationRecord
     nil
   end
 
-  private
-
-  # SUB-03: a url is valid only if it parses as http/https with a host.
-  def url_must_be_http
-    uri = URI.parse(url)
-    unless uri.is_a?(URI::HTTP) && uri.host.present?
-      errors.add(:url, "must start with http:// or https://")
-    end
-  rescue URI::InvalidURIError
-    errors.add(:url, "is not a valid URL")
   # Action-state helpers used by the views (ACT-01..06).
   def owned_by?(a_user)
     a_user.present? && user_id == a_user.id
@@ -61,5 +51,17 @@ class Submission < ApplicationRecord
 
   def hidden_by?(a_user)
     a_user.present? && hides.exists?(user_id: a_user.id)
+  end
+
+  private
+
+  # SUB-03: a url is valid only if it parses as http/https with a host.
+  def url_must_be_http
+    uri = URI.parse(url)
+    unless uri.is_a?(URI::HTTP) && uri.host.present?
+      errors.add(:url, "must start with http:// or https://")
+    end
+  rescue URI::InvalidURIError
+    errors.add(:url, "is not a valid URL")
   end
 end
