@@ -59,6 +59,7 @@ class SubmissionActionsTest < ActionDispatch::IntegrationTest
 
     get hidden_url
     assert_includes @response.body, submission.title
+    assert_select ".hn-nav a.current", text: "hidden submissions"
   end
 
   # ACT-01 / ACT-02 ----------------------------------------------------------

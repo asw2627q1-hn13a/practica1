@@ -87,7 +87,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
   test "submissions opens a new tab and lists only that user's, newest first" do
     old = Submission.create!(title: "Alice old", url: "https://example.com/old",
-                              submission_type: "url", user: @alice, created_at: 2.days.ago)
+                             submission_type: "url", user: @alice, created_at: 2.days.ago)
     get submissions_user_url(@alice)
     assert_response :success
     assert_select ".hn-nav a.current", text: "alice's submissions"
@@ -158,5 +158,66 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     get favorite_comments_user_url(id: 0)
     assert_response :not_found
+  end
+
+  # USR-08
+  test "profile shows hidden and upvoted links only to its owner" do
+    log_in_as(@alice)
+    get user_url(@alice)
+    assert_select "a[href=?]", hidden_path
+    assert_select "a[href=?]", upvoted_path
+    get user_url(@bob)
+    assert_select "a[href=?]", hidden_path, count: 0
+    assert_select "a[href=?]", upvoted_path, count: 0
+  end
+
+  test "profile hides the hidden and upvoted links when logged out" do
+    get user_url(@alice)
+    assert_select "a[href=?]", upvoted_path, count: 0
+  end
+
+  test "upvoted requires login" do
+    get upvoted_url
+    assert_redirected_to login_path
+  end
+
+  test "upvoted shows my voted submissions by default, with unvote" do
+    Vote.create!(user: @alice, votable: submissions(:url_low))
+    Vote.create!(user: @alice, votable: comments(:second))
+    Vote.create!(user: @bob, votable: submissions(:ask_one)) # someone else's vote
+    log_in_as(@alice)
+    get upvoted_url
+    assert_response :success
+    assert_select ".hn-nav a.current", text: "upvoted"
+    assert_select ".favorites-nav a[href=?]", upvoted_comments_path
+    assert_match "A low ranked url submission", response.body
+    assert_no_match "A reply-worthy second comment", response.body
+    assert_no_match "Ask HN about something", response.body
+    assert_select "form[action=?]", unvote_submission_path(submissions(:url_low))
+  end
+
+  test "upvoted comments shows my voted comments, with unvote" do
+    Vote.create!(user: @alice, votable: submissions(:url_low))
+    Vote.create!(user: @alice, votable: comments(:second))
+    log_in_as(@alice)
+    get upvoted_comments_url
+    assert_response :success
+    assert_select ".hn-nav a.current", text: "upvoted"
+    assert_match "A reply-worthy second comment", response.body
+    assert_select "form[action=?]", unvote_comment_path(comments(:second))
+  end
+
+  test "upvoted comments requires login" do
+    get upvoted_comments_url
+    assert_redirected_to login_path
+  end
+
+  test "unvoting from the upvoted page removes it from the list" do
+    Vote.create!(user: @alice, votable: submissions(:url_low))
+    log_in_as(@alice)
+    post unvote_submission_url(submissions(:url_low)), headers: { "HTTP_REFERER" => upvoted_url }
+    assert_redirected_to upvoted_url
+    follow_redirect!
+    assert_no_match "A low ranked url submission", response.body
   end
 end
