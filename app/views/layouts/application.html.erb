@@ -31,13 +31,18 @@
         <nav class="hn-nav">
           <%= link_to "new", newest_path %>
           <span class="sep">|</span>
-          <%= link_to "threads", threads_path %>
+          <%= link_to "threads", threads_path, class: ("current" if controller_name == "comments" && action_name == "threads") %>
           <span class="sep">|</span>
           <%= link_to "comments", comments_path %>
           <span class="sep">|</span>
           <%= link_to "ask", ask_path %>
           <span class="sep">|</span>
           <%= link_to "submit", submit_path %>
+          <%# USR-07: extra tab opened from a profile link (see content_for :nav_extra). %>
+          <% if content_for?(:nav_extra) %>
+            <span class="sep">|</span>
+            <%= yield :nav_extra %>
+          <% end %>
         </nav>
         <%= form_with url: "/search", method: :get, class: "hn-search", data: { turbo: false } do |f| %>
           <%= f.search_field :q, value: params[:q], placeholder: "search" %>

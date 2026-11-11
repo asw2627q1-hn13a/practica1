@@ -1,0 +1,12 @@
+<% content_for :title, "#{@user.username}'s favorites" %>
+<% content_for :nav_extra, link_to("favorites", favorite_submissions_user_path(@user), class: "current") %>
+
+<%= render "users/favorites_nav", user: @user, current: :comments %>
+
+<ul class="comment-list">
+  <%= render partial: "comments/listed", collection: @comments, as: :comment %>
+</ul>
+
+<% if @comments.empty? %>
+  <p>No favorite comments yet.</p>
+<% end %>

@@ -26,7 +26,15 @@ Rails.application.routes.draw do
   end
 
   # USR-01 USR-02: view, edit and update user profiles
-  resources :users, only: [ :show, :edit, :update ]
+  resources :users, only: [ :show, :edit, :update ] do
+    # USR-07: public activity listings of a user's profile. (The user's comments
+    # are shown by the existing threads page: /threads?id=<user id>.)
+    member do
+      get :submissions            # opens the "<user>'s submissions" tab
+      get :favorite_submissions   # "favorites" tab, default sub-view
+      get :favorite_comments      # "favorites" tab, comments sub-view
+    end
+  end
 
   # News page (SUB-01): the app root, shows url submissions ranked by points.
   get "news", to: "submissions#index", as: :news
@@ -39,6 +47,9 @@ Rails.application.routes.draw do
   get "comments", to: "comments#index", as: :comments
   # ACT-06: the logged-in user's hidden submissions.
   get "hidden", to: "submissions#hidden", as: :hidden
+  # USR-08: the logged-in user's upvoted submissions and comments.
+  get "upvoted", to: "users#upvoted_submissions", as: :upvoted
+  get "upvoted/comments", to: "users#upvoted_comments", as: :upvoted_comments
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
