@@ -147,6 +147,37 @@ ol.submission-list li.submission {
 .reply-page { max-width: 640px; }
 .reply-page h2 { font-size: 15px; }
 
+/* ACT-01..06: vote / favorite / hide / edit / delete, shown inline as links.
+   button_to renders a <form>; keep them inline and style buttons like links. */
+.actions { font-size: 11px; color: #828282; }
+.actions form,
+.comment-actions form { display: inline; margin: 0; }
+.actions a,
+.comment-actions a { color: #828282; margin-left: 6px; }
+.actions button,
+.comment-actions button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 6px;
+  font: inherit;
+  font-size: 11px;
+  color: #828282;
+  cursor: pointer;
+}
+.actions button:hover,
+.actions a:hover,
+.comment-actions button:hover,
+.comment-actions a:hover { text-decoration: underline; }
+
+.confirm-page { max-width: 640px; }
+.confirm-page form { display: inline; }
+.confirm-page blockquote {
+  border-left: 2px solid #f0e8d8;
+  margin: 8px 0;
+  padding-left: 8px;
+}
+
 .profile-banner { width: 100%; max-width: 600px; height: 120px; object-fit: cover; display: block; }
 .profile-avatar { width: 80px; height: 80px; object-fit: cover; display: block; margin: 8px 0; }
 .profile-placeholder { background: #ddd; color: #666; font-size: 12px; text-align: center; }

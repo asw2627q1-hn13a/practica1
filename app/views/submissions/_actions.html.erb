@@ -1,0 +1,29 @@
+<%# ACT-03/05/06 + ACT-01/02: per-submission actions. local: submission. %>
+<% if current_user %>
+  <span class="actions">
+    <% unless submission.owned_by?(current_user) %>
+      <% if submission.voted_by?(current_user) %>
+        <%= button_to "▲ unvote", unvote_submission_path(submission) %>
+      <% else %>
+        <%= button_to "▲ vote", upvote_submission_path(submission) %>
+      <% end %>
+    <% end %>
+
+    <% if submission.favorited_by?(current_user) %>
+      <%= button_to "un-favorite", unfavorite_submission_path(submission) %>
+    <% else %>
+      <%= button_to "favorite", favorite_submission_path(submission) %>
+    <% end %>
+
+    <% if submission.hidden_by?(current_user) %>
+      <%= button_to "unhide", unhide_submission_path(submission) %>
+    <% else %>
+      <%= button_to "hide", hide_submission_path(submission) %>
+    <% end %>
+
+    <% if submission.owned_by?(current_user) %>
+      <%= link_to "edit", edit_submission_path(submission) %>
+      <%= link_to "delete", delete_submission_path(submission) %>
+    <% end %>
+  </span>
+<% end %>

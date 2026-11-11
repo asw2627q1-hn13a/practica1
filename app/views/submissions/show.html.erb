@@ -16,6 +16,7 @@
   <% if @submission.text.present? %>
     <div class="submission-text"><%= simple_format(@submission.text) %></div>
   <% end %>
+  <%= render "submissions/actions", submission: @submission %>
 </div>
 
 <%# COM-01: add a comment (logged-in users only). %>

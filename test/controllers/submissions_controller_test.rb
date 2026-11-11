@@ -82,7 +82,7 @@ class SubmissionsControllerTest < ActionDispatch::IntegrationTest
       delete submission_url(@submission)
     end
 
-    assert_redirected_to submissions_url
+    assert_redirected_to root_path
   end
 
   # SUB-03 -------------------------------------------------------------------
