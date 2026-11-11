@@ -219,5 +219,16 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to upvoted_url
     follow_redirect!
     assert_no_match "A low ranked url submission", response.body
+  test "owner uploads a new avatar" do
+    log_in_as(@alice)
+    patch user_path(@alice), params: { user: { avatar: fixture_file_upload("avatar.png", "image/png") } }
+    assert_redirected_to user_path(@alice)
+    assert_equal "avatar.png", @alice.reload.avatar.filename.to_s
+  end
+
+  test "non-image upload shows an error" do
+    log_in_as(@alice)
+    patch user_path(@alice), params: { user: { avatar: fixture_file_upload("not_an_image.txt", "image/png") } }
+    assert_response :unprocessable_content
   end
 end
