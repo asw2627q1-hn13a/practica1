@@ -47,6 +47,9 @@ Rails.application.routes.draw do
   get "comments", to: "comments#index", as: :comments
   # ACT-06: the logged-in user's hidden submissions.
   get "hidden", to: "submissions#hidden", as: :hidden
+  # USR-08: the logged-in user's upvoted submissions and comments.
+  get "upvoted", to: "users#upvoted_submissions", as: :upvoted
+  get "upvoted/comments", to: "users#upvoted_comments", as: :upvoted_comments
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

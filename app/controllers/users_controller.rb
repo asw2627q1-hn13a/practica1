@@ -1,6 +1,6 @@
 class UsersController < ApplicationController
-  before_action :require_login, only: %i[ edit update ]
-  before_action :set_user
+  before_action :require_login, only: %i[ edit update upvoted_submissions upvoted_comments ]
+  before_action :set_user, except: %i[ upvoted_submissions upvoted_comments ]
   before_action :require_owner, only: %i[ edit update ]
 
   # GET /users/1 (USR-03)
@@ -24,6 +24,21 @@ class UsersController < ApplicationController
     @comments = @user.favorites.where(favoritable_type: "Comment")
                       .order(created_at: :desc, id: :desc)
                       .includes(favoritable: [ :user, :submission ]).map(&:favoritable)
+  end
+
+  # GET /upvoted (USR-08): submissions the logged-in user has voted, most recent
+  # first. No user id in the URL, so only your own votes can be seen.
+  def upvoted_submissions
+    @submissions = current_user.votes.where(votable_type: "Submission")
+                                .order(created_at: :desc, id: :desc)
+                                .includes(votable: :user).map(&:votable)
+  end
+
+  # GET /upvoted/comments (USR-08): comments the logged-in user has voted.
+  def upvoted_comments
+    @comments = current_user.votes.where(votable_type: "Comment")
+                            .order(created_at: :desc, id: :desc)
+                            .includes(votable: [ :user, :submission ]).map(&:votable)
   end
 
   # GET /users/1/edit (USR-04)
