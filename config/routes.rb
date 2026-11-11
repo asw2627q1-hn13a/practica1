@@ -38,6 +38,8 @@ Rails.application.routes.draw do
 
   # News page (SUB-01): the app root, shows url submissions ranked by points.
   get "news", to: "submissions#index", as: :news
+  # SRC-01: search all visible submissions by title.
+  get "search", to: "submissions#search", as: :search
   # SUB-02 pages.
   get "submit", to: "submissions#new", as: :submit
   get "newest", to: "submissions#newest", as: :newest

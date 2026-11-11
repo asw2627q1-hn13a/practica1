@@ -221,7 +221,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "A low ranked url submission", response.body
   test "owner uploads a new avatar" do
     log_in_as(@alice)
-    patch user_path(@alice), params: { user: { avatar: fixture_file_upload("avatar.png", "image/png") } }
+    patch user_path(@alice), params: { user: { avatar: fixture_file_upload("avatar.png", "image/png", true) } }
     assert_redirected_to user_path(@alice)
     assert_equal "avatar.png", @alice.reload.avatar.filename.to_s
   end
