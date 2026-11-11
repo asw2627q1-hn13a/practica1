@@ -1,0 +1,12 @@
+<% content_for :title, "Hidden" %>
+
+<%# ACT-06: the user's hidden submissions, each with an unhide action. %>
+<h2>Hidden submissions</h2>
+
+<ol class="submission-list">
+  <%= render partial: "item", collection: @submissions, as: :submission %>
+</ol>
+
+<% if @submissions.empty? %>
+  <p>No hidden submissions.</p>
+<% end %>

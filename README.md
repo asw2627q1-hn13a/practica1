@@ -1,17 +1,22 @@
-# Hacker News Clone — ASW 2627Q1 · equip hn13a
+## Equip
 
-Clon de Hacker News desenvolupat amb Ruby on Rails 8.1.
+| Nom i cognoms     | Usuari de GitHub |
+|-------------------|------------------|
+| Alex Blanco       | https://github.com/alexblancopastor-ctrl    |
+| Simona Duelt      | https://github.com/saimonSaysClapYourHands  |
+| Raúl Guasch       | https://github.com/Marc-PlanasBosch         |
+| Marc Planas       | https://github.com/Marc-PlanasBosch         |
+| Jan Santaliestra  | https://github.com/sSantaliestraJ           |
 
-## Lliurament
+## Gestió del projecte
 
-- **Membres de l'equip:**
-  - Marc Planas Bosch
-  - _TODO: nom complet_ (`santa`)
-  - _TODO: nom complet_ (`alexblancopastor-ctrl`)
-  - _TODO: nom complet_ (`raul-guasch`)
-  - _TODO: nom complet_ (`saimonsaysclapyourhands`)
-- **Taiga:** https://tree.taiga.io/project/marc-planasbosch-asw2627q1-hn13a
-- **Aplicació desplegada (Render):** _TODO: enganxar la URL un cop desplegat_ (p. ex. `https://hackernews.onrender.com`)
+Seguiment del projecte (backlog, sprints i tasques) a Taiga:
+- https://tree.taiga.io/project/marc-planasbosch-asw2627q1-hn13a
+
+## Aplicació desplegada
+
+L'aplicació està desplegada a Render:
+- https://practica1-65h7.onrender.com/
 
 ## Requisits
 

@@ -44,6 +44,9 @@ gem "image_processing", "~> 1.2"
 gem "omniauth-github"
 gem "omniauth-rails_csrf_protection"
 
+# imatges al bucket de AWS S3
+gem "aws-sdk-s3", require: false
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
