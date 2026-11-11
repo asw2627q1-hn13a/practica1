@@ -6,6 +6,9 @@ class Submission < ApplicationRecord
 
   validates :title, presence: true
   validates :submission_type, inclusion: { in: TYPES }
+  # SUB-03: when a url is given it must be a valid http(s) url. A blank url is
+  # not an error — the submission simply becomes an "ask".
+  validate :url_must_be_http, if: -> { url.present? }
 
   # News: more relevant first. HN uses its own algorithm; for now, by points.
   scope :ranked, -> { order(points: :desc, created_at: :desc) }
@@ -27,5 +30,17 @@ class Submission < ApplicationRecord
     host&.delete_prefix("www.")
   rescue URI::InvalidURIError
     nil
+  end
+
+  private
+
+  # SUB-03: a url is valid only if it parses as http/https with a host.
+  def url_must_be_http
+    uri = URI.parse(url)
+    unless uri.is_a?(URI::HTTP) && uri.host.present?
+      errors.add(:url, "must start with http:// or https://")
+    end
+  rescue URI::InvalidURIError
+    errors.add(:url, "is not a valid URL")
   end
 end

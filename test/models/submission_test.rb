@@ -35,4 +35,22 @@ class SubmissionTest < ActiveSupport::TestCase
   test "domain is nil without url" do
     assert_nil Submission.new(url: nil).domain
   end
+
+  # SUB-03 -------------------------------------------------------------------
+
+  test "a url without http(s) scheme is invalid" do
+    submission = Submission.new(title: "Hi", url: "example.com", submission_type: "url", user: users(:alice))
+    assert_not submission.valid?
+    assert submission.errors[:url].any?
+  end
+
+  test "a non-http url (ftp) is invalid" do
+    submission = Submission.new(title: "Hi", url: "ftp://files.example.com", submission_type: "url", user: users(:alice))
+    assert_not submission.valid?
+  end
+
+  test "a blank url is valid (it becomes an ask submission)" do
+    submission = Submission.new(title: "Ask me", url: "", submission_type: "ask", user: users(:alice))
+    assert submission.valid?
+  end
 end
