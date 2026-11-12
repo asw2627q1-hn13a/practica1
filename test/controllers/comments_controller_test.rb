@@ -96,4 +96,25 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     # another user's unrelated top-level comment is not in alice's threads
     assert_not @response.body.include?(comments(:second).body)
   end
+
+  # COM-04 -------------------------------------------------------------------
+
+  test "a comment has its own public page with its subtree and a link to the submission" do
+    get comment_url(comments(:first))
+    assert_response :success
+    # the comment itself
+    assert_includes @response.body, comments(:first).body
+    # and a reply from its subtree
+    assert_includes @response.body, comments(:reply_to_first).body
+    # a link back to the submission it belongs to
+    assert_select "a[href=?]", submission_path(@submission)
+  end
+
+  test "a comment page shows only its own subtree, not other comments" do
+    get comment_url(comments(:second))
+    assert_response :success
+    assert_includes @response.body, comments(:second).body
+    # reply_to_first hangs under "first", so it is not on "second"'s page
+    assert_not @response.body.include?(comments(:reply_to_first).body)
+  end
 end
