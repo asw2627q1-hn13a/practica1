@@ -8,9 +8,16 @@ class CommentsController < ApplicationController
                                         upvote unvote favorite unfavorite ]
   before_action :require_owner, only: %i[ edit update destroy delete ]
 
-  # GET /comments (LST-03): latest comments from everyone, newest first.
+  # GET /comments (LST-03): latest comment threads from everyone. Root comments
+  # newest first, each shown with its nested replies (and vote / favorite /
+  # reply buttons) plus a link to the submission it belongs to.
   def index
-    @comments = Comment.by_recent.includes(:user, :submission)
+    comments = Comment.by_recent.includes(:user, :submission).to_a
+    @replies_by_parent = comments
+      .select(&:parent_id)
+      .group_by(&:parent_id)
+      .transform_values { |replies| replies.sort_by(&:created_at) }
+    @root_comments = comments.select { |c| c.parent_id.nil? }
   end
 
   # GET /threads (LST-02): a user's comments, each with the replies it has

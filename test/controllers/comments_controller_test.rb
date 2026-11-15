@@ -77,6 +77,19 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_includes @response.body, comments(:on_low).body
   end
 
+  test "comments page shows nested replies, vote actions and the submission link" do
+    log_in_as(users(:bob))
+    get comments_url
+    assert_response :success
+    # the root comment and its nested reply both appear in the thread
+    assert_includes @response.body, comments(:first).body
+    assert_includes @response.body, comments(:reply_to_first).body
+    # a link back to the submission the thread belongs to
+    assert_select "a[href=?]", submission_path(submissions(:url_high))
+    # vote action is available on another user's comment (bob does not own "first")
+    assert_select "form[action=?]", upvote_comment_path(comments(:first))
+  end
+
   # LST-02 -------------------------------------------------------------------
 
   test "threads page requires login" do
