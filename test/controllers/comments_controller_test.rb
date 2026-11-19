@@ -77,6 +77,19 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_includes @response.body, comments(:on_low).body
   end
 
+  test "comments page shows nested replies, vote actions and the submission link" do
+    log_in_as(users(:bob))
+    get comments_url
+    assert_response :success
+    # the root comment and its nested reply both appear in the thread
+    assert_includes @response.body, comments(:first).body
+    assert_includes @response.body, comments(:reply_to_first).body
+    # a link back to the submission the thread belongs to
+    assert_select "a[href=?]", submission_path(submissions(:url_high))
+    # vote action is available on another user's comment (bob does not own "first")
+    assert_select "form[action=?]", upvote_comment_path(comments(:first))
+  end
+
   # LST-02 -------------------------------------------------------------------
 
   test "threads page requires login" do
@@ -95,5 +108,26 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     assert_includes @response.body, comments(:reply_to_first).body
     # another user's unrelated top-level comment is not in alice's threads
     assert_not @response.body.include?(comments(:second).body)
+  end
+
+  # COM-04 -------------------------------------------------------------------
+
+  test "a comment has its own public page with its subtree and a link to the submission" do
+    get comment_url(comments(:first))
+    assert_response :success
+    # the comment itself
+    assert_includes @response.body, comments(:first).body
+    # and a reply from its subtree
+    assert_includes @response.body, comments(:reply_to_first).body
+    # a link back to the submission it belongs to
+    assert_select "a[href=?]", submission_path(@submission)
+  end
+
+  test "a comment page shows only its own subtree, not other comments" do
+    get comment_url(comments(:second))
+    assert_response :success
+    assert_includes @response.body, comments(:second).body
+    # reply_to_first hangs under "first", so it is not on "second"'s page
+    assert_not @response.body.include?(comments(:reply_to_first).body)
   end
 end

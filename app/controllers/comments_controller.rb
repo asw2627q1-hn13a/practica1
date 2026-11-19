@@ -1,16 +1,23 @@
 class CommentsController < ApplicationController
   # threads is public when filtered by a user id (USR-07: /threads?id=<user id>);
   # without id it shows the logged-in user's own threads and needs login.
-  before_action :require_login, except: %i[ index threads ]
+  before_action :require_login, except: %i[ index threads show ]
   before_action :require_login_unless_filtered, only: :threads
   before_action :set_submission, only: %i[ new create ]
-  before_action :set_comment, only: %i[ edit update destroy delete
+  before_action :set_comment, only: %i[ show edit update destroy delete
                                         upvote unvote favorite unfavorite ]
   before_action :require_owner, only: %i[ edit update destroy delete ]
 
-  # GET /comments (LST-03): latest comments from everyone, newest first.
+  # GET /comments (LST-03): latest comment threads from everyone. Root comments
+  # newest first, each shown with its nested replies (and vote / favorite /
+  # reply buttons) plus a link to the submission it belongs to.
   def index
-    @comments = Comment.by_recent.includes(:user, :submission)
+    comments = Comment.by_recent.includes(:user, :submission).to_a
+    @replies_by_parent = comments
+      .select(&:parent_id)
+      .group_by(&:parent_id)
+      .transform_values { |replies| replies.sort_by(&:created_at) }
+    @root_comments = comments.select { |c| c.parent_id.nil? }
   end
 
   # GET /threads (LST-02): a user's comments, each with the replies it has
@@ -42,6 +49,13 @@ class CommentsController < ApplicationController
       @comments = @submission.comments.chronological.includes(:user)
       render "submissions/show", status: :unprocessable_content
     end
+  end
+
+  # GET /comments/:id (COM-04): a single comment with its full reply subtree.
+  # Public, like the comment listings. The view also links back to the
+  # submission the comment belongs to.
+  def show
+    @replies_by_parent = subtree_replies_by_parent(@comment)
   end
 
   # GET /comments/:id/edit (ACT-01, owner only)
@@ -113,6 +127,20 @@ class CommentsController < ApplicationController
 
   def set_comment
     @comment = Comment.find(params[:id])
+  end
+
+  # COM-04: walk the reply tree under a comment level by level and group the
+  # replies by their parent id, the shape the recursive _comment partial wants.
+  def subtree_replies_by_parent(root)
+    by_parent = Hash.new { |h, k| h[k] = [] }
+    queue = [ root ]
+    until queue.empty?
+      current = queue.shift
+      children = current.replies.chronological.includes(:user).to_a
+      by_parent[current.id] = children if children.any?
+      queue.concat(children)
+    end
+    by_parent
   end
 
   # ACT-01/02: only the author may edit or delete, even via a direct URL.

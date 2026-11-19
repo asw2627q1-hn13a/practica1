@@ -1,0 +1,10 @@
+<% content_for :title, "Comment by #{@comment.user.username}" %>
+
+<%# COM-04: a single comment and its whole subtree of replies. %>
+<p class="comment-on">
+  on: <%= link_to @comment.submission.title, submission_path(@comment.submission) %>
+</p>
+
+<ul class="comment-list comment-tree">
+  <%= render "submissions/comment", comment: @comment, replies_by_parent: @replies_by_parent %>
+</ul>

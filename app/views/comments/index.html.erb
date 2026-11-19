@@ -1,10 +1,21 @@
 <% content_for :title, "Comments" %>
 
-<%# LST-03: latest comments from everyone, newest first. %>
+<%# LST-03: latest comment threads, newest root comment first. Each thread is
+    rendered with the recursive comment partial (nested replies + vote /
+    favorite / reply buttons) and a link to the submission it belongs to. %>
 <ul class="comment-list">
-  <%= render partial: "comments/listed", collection: @comments, as: :comment %>
+  <% @root_comments.each do |comment| %>
+    <li class="comment-thread">
+      <div class="comment-on">
+        on: <%= link_to comment.submission.title, submission_path(comment.submission) %>
+      </div>
+      <ul class="comment-tree">
+        <%= render "submissions/comment", comment: comment, replies_by_parent: @replies_by_parent %>
+      </ul>
+    </li>
+  <% end %>
 </ul>
 
-<% if @comments.empty? %>
+<% if @root_comments.empty? %>
   <p>No comments yet.</p>
 <% end %>

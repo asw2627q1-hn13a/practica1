@@ -14,8 +14,9 @@ Rails.application.routes.draw do
     resources :comments, only: [ :new, :create ]
   end
 
+  # COM-04: a single comment with its subtree (:show).
   # ACT-01/02/04/05: actions on an individual comment.
-  resources :comments, only: [ :edit, :update, :destroy ] do
+  resources :comments, only: [ :show, :edit, :update, :destroy ] do
     member do
       get  :delete
       post :upvote

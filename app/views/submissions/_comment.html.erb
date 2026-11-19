@@ -4,7 +4,8 @@
   <div class="comment-meta">
     <%= link_to comment.user.username, user_path(comment.user) %>
     <%= pluralize(comment.points, "point") %>
-    <%= time_ago_in_words(comment.created_at) %> ago
+    <%# COM-04: the creation time links to the comment's own page. %>
+    <%= link_to "#{time_ago_in_words(comment.created_at)} ago", comment_path(comment) %>
   </div>
   <div class="comment-body"><%= simple_format(comment.body) %></div>
 
