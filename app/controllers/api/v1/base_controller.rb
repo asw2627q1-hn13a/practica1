@@ -4,7 +4,8 @@
 # fa servir sessions, cookies, CSRF ni `allow_browser`: un client com curl o
 # Postman no ha de rebre un 406 pensat per als navegadors de l'aplicació web.
 #
-# Defineix el format d'error comú de l'API (vegeu docs/api-design.md, §5):
+# Defineix el format d'error comú de l'API (vegeu docs/api-design.md, §5). Només
+# conté els helpers i els rescue_from; no té cap acció:
 #
 #   { "error": "not_found", "message": "...", "details": { ... } }
 #
@@ -23,8 +24,18 @@ module Api
         403 => "forbidden",
         404 => "not_found",
         409 => "conflict",
-        422 => "unprocessable_entity"
+        422 => "unprocessable_entity",
+        500 => "internal_server_error"
       }.freeze
+
+      # Rails comprova els rescue_from de l'últim al primer,
+      # de manera que els handlers específics de sota tenen prioritat.
+      # Un error inesperat respon 500 en JSON (sense exposar-ne el detall al
+      # client) i queda al log.
+      rescue_from StandardError do |e|
+        Rails.logger.error("#{e.class}: #{e.message}\n#{e.backtrace&.first(10)&.join("\n")}")
+        render_error(500, "Internal server error")
+      end
 
       rescue_from ActiveRecord::RecordNotFound do |e|
         message = e.model ? "#{e.model} with id=#{e.id} not found" : "Resource not found"
@@ -43,19 +54,13 @@ module Api
         render_error(400, "Request body is not valid JSON")
       end
 
-      # Destí de la ruta comodí de /api/v1 (vegeu config/routes.rb).
-      def route_not_found
-        render_error(404, "No route matches #{request.request_method} #{request.path}")
-      end
-
       private
 
       # Resposta d'error amb el format comú. `status` és un enter (400, 401, 403,
-      # 404, 409 o 422); `headers` permet, per exemple, afegir Location en un 409.
-      def render_error(status, message, details: nil, headers: {})
+      # 404, 409, 422 o 500).
+      def render_error(status, message, details: nil)
         body = { error: ERROR_NAMES.fetch(status), message: message }
         body[:details] = details if details.present?
-        headers.each { |name, value| response.set_header(name, value) }
         render json: body, status: status
       end
 

@@ -24,6 +24,7 @@ documentaran DOC-01 i DOC-02 a `api/api.yaml`. Les rutes estan definides a
 | Actualització | `PUT` amb semàntica parcial: només es modifiquen els camps enviats i només els editables. `points`, `user`, `submission_type`, `id` i dates mai es poden modificar. (Rails també accepta `PATCH` com a àlies, però no es documenta.) |
 | Llistats | Sempre un array JSON; si no hi ha resultats, `[]` amb `200`. Sense paginació (la web tampoc en té). |
 | CORS | Habilitat per a `https://editor.swagger.io` (INF-05); ha de permetre `GET, POST, PUT, DELETE, OPTIONS` i la capçalera `X-API-KEY`. |
+| Rutes inexistents | Tot el prefix `/api` és reservat a l'API: qualsevol ruta que no existeixi (`/api/v1/foo`, `/api/v2/...`, `/api/foo`) respon **404 en JSON**. Un **verb no definit sobre una ruta existent** (p. ex. `DELETE /api/v1/submissions`) també respon **404**, no 405: Rails no calcula la capçalera `Allow` i no val la pena complicar-ho. Fora de `/api`, les pàgines d'error de la web continuen sent HTML. |
 | Fora de l'API | Login, registre i logout (l'enunciat els exclou). No hi ha `POST /users` ni `DELETE /users/{id}`. |
 
 ### Codis d'estat
@@ -39,6 +40,7 @@ documentaran DOC-01 i DOC-02 a `api/api.yaml`. Les rutes estan definides a
 | **404 Not Found** | El recurs (o el recurs pare) no existeix. També una ruta inexistent sota `/api/v1`. |
 | **409 Conflict** | L'acció xoca amb l'estat actual: url de submission duplicada, vot/favorit/hidden ja existent. |
 | **422 Unprocessable Entity** | El JSON és correcte però no passa les validacions (títol buit, url amb format invàlid, text buit, fitxer que no és una imatge...). |
+| **500 Internal Server Error** | Error inesperat del servidor. Mateix format JSON, amb un missatge genèric (el detall només queda al log). |
 
 **Ordre de comprovació:** 401 → 404 → 403 → 400/422/409. Una petició sense api-key
 sempre és 401, encara que el recurs no existeixi.
@@ -71,7 +73,7 @@ Totes les submissions que l'usuari de l'api-key ha amagat queden excloses dels l
 
 **`POST /submissions`** — cos `{ "title": "...", "url": "...", "text": "..." }` (`title` obligatori).
 Amb `url` vàlida és tipus `url`; sense `url`, tipus `ask`. Si la `url` ja existeix: **409** amb
-`details.existing_submission_id` i capçalera `Location: /api/v1/submissions/{id}` (no es crea res).
+`details.existing_submission_id` (no es crea res; no s'envia `Location`, que a HTTP és per a 201/3xx).
 
 **`GET /submissions/{id}`** — la submission amb l'**arbre complet de comments** niat a `comments`.
 
@@ -104,7 +106,9 @@ No cal id de vot: l'element i l'api-key el identifiquen.
 | DELETE | `/comments/{commentId}/votes` | `unvoteComment` | API-11 | 200 | 404 |
 
 Les dues respostes (`201` i `200`) retornen els punts actualitzats: `{ "points": 12 }`.
-El DELETE retorna 200 i no 204 perquè API-11 demana retornar els `points`.
+> **Atenció, excepció intencionada:** `DELETE .../votes` retorna **200 amb `points`** (API-11 demana
+> retornar els punts actualitzats), mentre que `DELETE .../favorites` i `DELETE .../hidden` retornen
+> **204 sense cos**.
 
 ### 2.4 Favorites
 
@@ -115,7 +119,7 @@ El DELETE retorna 200 i no 204 perquè API-11 demana retornar els `points`.
 | POST | `/comments/{commentId}/favorites` | `favoriteComment` | API-12 | 201 | 404, 409 |
 | DELETE | `/comments/{commentId}/favorites` | `unfavoriteComment` | API-12 | 204 | 404 |
 
-El POST retorna `{ "favorited": true }`.
+El POST retorna `{ "favorited": true }`. El DELETE retorna 204 (a diferència de `.../votes`).
 
 ### 2.5 Hidden (només submissions)
 
@@ -124,7 +128,7 @@ El POST retorna `{ "favorited": true }`.
 | POST | `/submissions/{submissionId}/hidden` | `hideSubmission` | API-13 | 201 | 404, 409 (ja amagada) |
 | DELETE | `/submissions/{submissionId}/hidden` | `unhideSubmission` | API-13 | 204 | 404 (no existeix o no estava amagada) |
 
-El POST retorna `{ "hidden": true }`. Amagar només afecta els llistats de l'usuari de l'api-key.
+El POST retorna `{ "hidden": true }`; el DELETE retorna 204 (a diferència de `.../votes`). Amagar només afecta els llistats de l'usuari de l'api-key.
 
 ### 2.6 Users
 
@@ -148,6 +152,7 @@ El POST retorna `{ "hidden": true }`. Amagar només afecta els llistats de l'usu
 - `DELETE /users/{id}/images/{kind}` — `kind` = `avatar` o `banner`; torna a la imatge per defecte (com a la web). Un altre valor de `kind`: 404.
 - `threads`: els comments de l'usuari amb les respostes rebudes (array de comments amb `replies`). És públic, com `/threads?id=` a la web; l'usuari de l'api-key és un cas particular.
 - `upvoted/*` i `hidden` són **privats**: només si `{id}` és l'usuari de l'api-key; si no, 403.
+- Què retornen: `hidden` → array de **Submission** amagades per l'usuari; `upvoted/submissions` → array de **Submission** votades; `upvoted/comments` → array de **Comment** (plans, amb `submission`) votats. Ordenats per data de l'acció, del més recent al més antic.
 - Tots els llistats d'usuari van del més recent al més antic (`favorites/*` i `upvoted/*`: per data de l'acció).
 
 ---
@@ -226,7 +231,7 @@ X-API-KEY: 9f2c...
 
 ## 5. Format d'error comú
 
-Tots els errors (inclosos 401, 404 de ruta inexistent i 400 de JSON malformat) tenen aquesta forma:
+Tots els errors (inclosos 401, 404 de ruta inexistent, 400 de JSON malformat i 500 d'error inesperat) tenen aquesta forma:
 
 ```json
 {
@@ -238,7 +243,7 @@ Tots els errors (inclosos 401, 404 de ruta inexistent i 400 de JSON malformat) t
 
 | Camp | Tipus | Obligatori | Descripció |
 |---|---|---|---|
-| `error` | string | sí | Codi estable per a màquines: `bad_request`, `unauthorized`, `forbidden`, `not_found`, `conflict`, `unprocessable_entity`. |
+| `error` | string | sí | Codi estable per a màquines: `bad_request`, `unauthorized`, `forbidden`, `not_found`, `conflict`, `unprocessable_entity`, `internal_server_error`. |
 | `message` | string | sí | Explicació per a persones. |
 | `details` | objecte | no | 422: errors per camp. 409: `existing_submission_id` si és una url duplicada. |
 
@@ -254,6 +259,7 @@ han d'heretar-ne.
 | 404 | `Submission with id=99 not found` |
 | 409 | `This URL has already been submitted` |
 | 422 | `Validation failed` |
+| 500 | `Internal server error` |
 
 ---
 
@@ -294,4 +300,8 @@ decisions següents; un cop aprovada, es considera tancat i només es canvia per
 - [ ] Nom del camp del text d'un comment: `body` (com al model) i no `text`.
 - [ ] `threads` públic per a qualsevol usuari (com la web) i no només per a l'usuari de l'api-key.
 - [ ] Pujada d'imatges a `PUT /users/{id}/images` separat del `PUT /users/{id}` perquè només aquest sigui `multipart/form-data`.
+- [ ] **Canvi de comportament respecte a la web:** la web és idempotent (votar/amagar/marcar dues vegades, desvotar sense vot, o votar el contingut propi s'ignoren en silenci i redirigeixen), però l'API és estricta (409, 404 i 403) perquè un client d'API necessita saber si l'acció ha fet efecte. La web no canvia.
+- [ ] El 409 de url duplicada no envia `Location`; n'hi ha prou amb `details.existing_submission_id`.
+- [ ] Un verb no definit sobre una ruta existent respon 404 (no 405 amb `Allow`).
+- [ ] Tot `/api/*` que no existeix respon 404 en JSON.
 - [ ] Sense paginació.

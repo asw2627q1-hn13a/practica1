@@ -78,7 +78,7 @@ Rails.application.routes.draw do
   # canvi en aquestes rutes s'ha d'actualitzar també allà i a api/api.yaml.
   # Els controladors es creen a mesura que s'implementen les històries API-xx
   # (una ruta ja definida però sense controlador encara no és utilitzable).
-  # Les rutes que no existeixen sota /api/v1 responen amb un 404 en JSON.
+  # Les rutes que no existeixen sota /api responen amb un 404 en JSON (vegeu el final).
   namespace :api, defaults: { format: :json } do
     namespace :v1 do
       # Un usuari té com a molt un vot / un favorit per element, de manera que
@@ -120,10 +120,12 @@ Rails.application.routes.draw do
           delete "images/:kind",       action: :destroy_image                 # kind = avatar | banner
         end
       end
-
-      # Ha de ser l'última: qualsevol altra ruta sota /api/v1 respon 404 en JSON
-      # (i no la pàgina HTML d'error de Rails).
-      match "*path", to: "base#route_not_found", via: :all, format: false
     end
+
+    # Tot el prefix /api és reservat a l'API: qualsevol ruta que no existeixi
+    # (/api/v1/foo, /api/v2/..., /api/foo, o un verb no definit com
+    # DELETE /api/v1/submissions) respon 404 en JSON, no la pàgina HTML d'error.
+    # Ha de ser l'última ruta del namespace.
+    match "*path", to: "v1/not_found#show", via: :all, format: false
   end
 end
