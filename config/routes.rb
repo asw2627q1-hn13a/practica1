@@ -72,4 +72,60 @@ Rails.application.routes.draw do
   get "/auth/failure", to: "sessions#failure"
   
   delete "/logout", to: "sessions#destroy", as: :logout
+
+  # REST-01: API REST de nivell 2 (JSON). El disseny complet (recursos, URIs,
+  # verbs, codis d'estat i format d'error) és a docs/api-design.md: qualsevol
+  # canvi en aquestes rutes s'ha d'actualitzar també allà i a api/api.yaml.
+  # Els controladors es creen a mesura que s'implementen les històries API-xx
+  # (una ruta ja definida però sense controlador encara no és utilitzable).
+  # Les rutes que no existeixen sota /api responen amb un 404 en JSON (vegeu el final).
+  namespace :api, defaults: { format: :json } do
+    namespace :v1 do
+      # Un usuari té com a molt un vot / un favorit per element, de manera que
+      # l'element (submission o comment) i l'api-key identifiquen el recurs.
+      # POST crea, DELETE esborra; el controlador mira si arriba :submission_id
+      # o :comment_id.
+      concern :votable do
+        resource :votes, only: %i[create destroy]
+      end
+      concern :favoritable do
+        resource :favorites, only: %i[create destroy]
+      end
+
+      # API-03..06: submissions (llistats news/newest/ask i cerca amb ?list= i ?q=)
+      resources :submissions, only: %i[index show create update destroy],
+                              concerns: %i[votable favoritable] do
+        resources :comments, only: :create                                    # API-07
+        resource :hidden, only: %i[create destroy], controller: "hidden"      # API-13
+      end
+
+      # API-07..10: comments (llistat global, subarbre, edició, replies)
+      resources :comments, only: %i[index show update destroy],
+                            concerns: %i[votable favoritable] do
+        resources :replies, only: :create                                     # API-07
+      end
+
+      # API-14..17: usuaris i la seva activitat
+      resources :users, only: %i[show update] do
+        member do
+          get "submissions"
+          get "comments"
+          get "threads"
+          get "hidden"
+          get "favorites/submissions", action: :favorite_submissions
+          get "favorites/comments",    action: :favorite_comments
+          get "upvoted/submissions",   action: :upvoted_submissions
+          get "upvoted/comments",      action: :upvoted_comments
+          put "images",                action: :update_images                 # multipart/form-data
+          delete "images/:kind",       action: :destroy_image                 # kind = avatar | banner
+        end
+      end
+    end
+
+    # Tot el prefix /api és reservat a l'API: qualsevol ruta que no existeixi
+    # (/api/v1/foo, /api/v2/..., /api/foo, o un verb no definit com
+    # DELETE /api/v1/submissions) respon 404 en JSON, no la pàgina HTML d'error.
+    # Ha de ser l'última ruta del namespace.
+    match "*path", to: "v1/not_found#show", via: :all, format: false
+  end
 end
