@@ -23,6 +23,15 @@
   </table>
 
   <% if current_user == @user %>
+    <%# API-01: only the owner sees their api-key, in a copyable field. %>
+    <div class="api-key">
+      <label for="api-key-field">your api-key:</label>
+      <input id="api-key-field" type="text" value="<%= @user.api_key %>"
+             readonly onclick="this.select()"
+             aria-label="your api key (click to select, then copy)">
+      <small>use it as the API credential; keep it secret.</small>
+    </div>
+
     <p><%= link_to "edit profile", edit_user_path(@user) %></p>
 
     <div class="profile-links">

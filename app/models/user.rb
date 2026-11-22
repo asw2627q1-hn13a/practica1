@@ -18,6 +18,10 @@ class User < ApplicationRecord
   has_many :favorites, dependent: :destroy
   has_many :hides, dependent: :destroy
 
+  # API-01: a unique, hard-to-guess api-key generated automatically on create
+  # (base58 token). Backed by a NOT NULL + unique index; see the migration.
+  has_secure_token :api_key
+
   validates :provider, :uid, presence: true
   validates :uid, uniqueness: { scope: :provider }
   validates :username, presence: true, uniqueness: true
