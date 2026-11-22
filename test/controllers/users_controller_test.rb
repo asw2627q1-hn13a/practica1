@@ -24,6 +24,24 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", edit_user_path(@alice), count: 0
   end
 
+  # API-01
+  test "own profile shows the api-key" do
+    log_in_as(@alice)
+    get user_url(@alice)
+    assert_includes @response.body, @alice.api_key
+  end
+
+  test "another user's profile does not show their api-key" do
+    log_in_as(@bob)
+    get user_url(@alice)
+    assert_not_includes @response.body, @alice.api_key
+  end
+
+  test "a logged-out visitor does not see any api-key" do
+    get user_url(@alice)
+    assert_not_includes @response.body, @alice.api_key
+  end
+
   # USR-04
   test "edit requires login" do
     get edit_user_url(@alice)

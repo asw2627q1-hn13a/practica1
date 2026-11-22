@@ -45,4 +45,18 @@ class UserTest < ActiveSupport::TestCase
     user.reset_to_default(:avatar)
     assert_equal "default_avatar.png", user.avatar.filename.to_s
   end
+
+  # API-01 --------------------------------------------------------------------
+
+  test "a new user gets an api-key automatically" do
+    user = User.create!(provider: "github", uid: "api-1", username: "apiuser")
+    assert user.api_key.present?
+    assert_operator user.api_key.length, :>=, 20
+  end
+
+  test "two users get different api-keys" do
+    a = User.create!(provider: "github", uid: "api-2", username: "apiuser2")
+    b = User.create!(provider: "github", uid: "api-3", username: "apiuser3")
+    assert_not_equal a.api_key, b.api_key
+  end
 end
