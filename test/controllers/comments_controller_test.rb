@@ -130,4 +130,22 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     # reply_to_first hangs under "first", so it is not on "second"'s page
     assert_not @response.body.include?(comments(:reply_to_first).body)
   end
+
+  # COM-05 -------------------------------------------------------------------
+
+  test "a direct comment's parent link points to its submission" do
+    get submission_url(@submission)
+    assert_response :success
+    # "first" is a top-level comment on @submission -> parent goes to the submission
+    assert_select "#comment-#{comments(:first).id} > .comment-meta > a[href=?]",
+      submission_path(@submission), text: "parent"
+  end
+
+  test "a reply's parent link points to the comment it answers" do
+    get submission_url(@submission)
+    assert_response :success
+    # "reply_to_first" replies to "first" -> parent goes to that comment's page
+    assert_select "#comment-#{comments(:reply_to_first).id} > .comment-meta > a[href=?]",
+      comment_path(comments(:first)), text: "parent"
+  end
 end
