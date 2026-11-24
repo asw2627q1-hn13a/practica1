@@ -12,12 +12,24 @@
 # `error` és un codi estable per a màquines, `message` un text per a persones i
 # `details` és opcional (per exemple, els errors de validació per camp).
 #
-# L'autenticació amb api-key NO és aquí: és l'abast d'API-02. Quan estigui feta,
-# s'hi afegirà un before_action que usarà `render_error(401, ...)` i
-# `render_error(403, ...)`.
+# API-02: autenticació amb api-key (vegeu docs/api-design.md, §1).
+#
+# - Tota petició ha de portar la capçalera `X-API-KEY`. El before_action
+#   `authenticate_api_key!` busca l'usuari que en té aquella clau i el desa a
+#   `current_user`; si falta o no coincideix amb cap usuari, respon 401 i
+#   l'acció ja no s'executa.
+# - L'usuari actiu (creador, votant...) és SEMPRE `current_user`, mai un camp
+#   del cos de la petició.
+# - Les accions que modifiquen contingut d'un usuari (PUT, DELETE) criden
+#   `authorize_owner!(registre)`, que respon 403 si no és de `current_user`.
 module Api
   module V1
     class BaseController < ActionController::API
+      # Excepció pròpia per al 403. authorize_owner! la llança des de dins
+      # d'una acció: un `render` no aturaria el codi que ve després (p. ex. el
+      # `destroy`), però una excepció sí.
+      class ForbiddenError < StandardError; end
+
       ERROR_NAMES = {
         400 => "bad_request",
         401 => "unauthorized",
@@ -54,7 +66,35 @@ module Api
         render_error(400, "Request body is not valid JSON")
       end
 
+      rescue_from ForbiddenError do |e|
+        render_error(403, e.message)
+      end
+
+      # S'executa abans de qualsevol acció de tots els controladors de l'API.
+      before_action :authenticate_api_key!
+
       private
+
+      # L'usuari propietari de l'api-key de la petició. Només és nil si
+      # authenticate_api_key! ja ha respost 401 (i llavors l'acció no s'executa).
+      attr_reader :current_user
+
+      # 401 si la capçalera X-API-KEY falta o no correspon a cap usuari.
+      # Com que fa `render`, Rails atura la cadena de filtres i l'acció no corre.
+      def authenticate_api_key!
+        api_key = request.headers["X-API-KEY"].presence
+        @current_user = User.find_by(api_key: api_key) if api_key
+        render_error(401, "API key is missing or invalid") unless @current_user
+      end
+
+      # 403 si `record` (submission, comment...) no és de l'usuari de l'api-key.
+      # Ús dins d'una acció: `authorize_owner!(submission)` abans de modificar-lo.
+      def authorize_owner!(record)
+        return if record.user_id == current_user.id
+
+        raise ForbiddenError,
+              "You can only modify your own #{record.model_name.human.downcase.pluralize}"
+      end
 
       # Resposta d'error amb el format comú. `status` és un enter (400, 401, 403,
       # 404, 409, 422 o 500).

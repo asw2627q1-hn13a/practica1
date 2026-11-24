@@ -12,9 +12,6 @@ info:
     Autenticació: TOTES les peticions han de portar la capçalera `X-API-KEY`
     amb l'api-key de l'usuari, que es pot copiar des del seu perfil.
 
-    Aquest fitxer (DOC-01) només defineix la base — info, servers, seguretat i
-    esquemes reutilitzables. Els endpoints es documenten a DOC-02.
-
 servers:
   - url: https://practica1-65h7.onrender.com
     description: Producció (Render)
@@ -40,9 +37,57 @@ tags:
   - name: users
     description: Perfils d'usuari i la seva activitat.
 
-# Els paths es completen a DOC-02. OpenAPI 3.0 exigeix la clau `paths`, que aquí
-# va buida a propòsit.
-paths: {}
+# Els paths es completen a mesura que s'implementen els endpoints (DOC-02: cada
+# PR d'endpoint hi afegeix el seu path).
+paths:
+  /api/v1/submissions:
+    get:
+      tags: [submissions]
+      operationId: listSubmissions
+      summary: Llista submissions (news/newest/ask) i cerca per títol.
+      description: |
+        Retorna el llistat news (tipus url, per points), newest (per data, de
+        més recent a menys) o ask (només tipus ask). Amb `q` cerca pel títol
+        sense distingir majúscules; sense `list`, la cerca es fa sobre totes les
+        submissions ordenades per points. Les submissions que l'usuari de
+        l'api-key ha amagat queden excloses. Si no hi ha resultats, retorna un
+        array buit amb 200.
+      parameters:
+        - name: list
+          in: query
+          required: false
+          description: Quin llistat tornar (per defecte news).
+          schema:
+            type: string
+            enum: [news, newest, ask]
+            default: news
+        - name: q
+          in: query
+          required: false
+          description: Paraula a cercar dins del títol (case-insensitive).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Llista de submissions (array buit si no n'hi ha cap).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Submission"
+        "400":
+          description: El paràmetre `list` té un valor no permès.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
 components:
   securitySchemes:
