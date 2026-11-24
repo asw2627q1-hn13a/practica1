@@ -130,4 +130,50 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
     # reply_to_first hangs under "first", so it is not on "second"'s page
     assert_not @response.body.include?(comments(:reply_to_first).body)
   end
+
+  # COM-05 -------------------------------------------------------------------
+
+  test "a direct comment's parent link points to its submission" do
+    get submission_url(@submission)
+    assert_response :success
+    # "first" is a top-level comment on @submission -> parent goes to the submission
+    assert_select "#comment-#{comments(:first).id} > .comment-meta > a[href=?]",
+      submission_path(@submission), text: "parent"
+  end
+
+  test "a reply's parent link points to the comment it answers" do
+    get submission_url(@submission)
+    assert_response :success
+    # "reply_to_first" replies to "first" -> parent goes to that comment's page
+    assert_select "#comment-#{comments(:reply_to_first).id} > .comment-meta > a[href=?]",
+      comment_path(comments(:first)), text: "parent"
+  end
+
+  test "the threads page shows parent links for a comment and its reply" do
+    get threads_url(id: users(:alice).id)
+    assert_response :success
+    # alice's top-level comment -> parent goes to the submission
+    assert_select "#comment-#{comments(:first).id} > .comment-meta > a[href=?]",
+      submission_path(submissions(:url_high)), text: "parent"
+    # the reply shown beneath it -> parent goes to the comment it answers
+    assert_select "#comment-#{comments(:reply_to_first).id} > .comment-meta > a[href=?]",
+      comment_path(comments(:first)), text: "parent"
+  end
+
+  test "a reply's own page links its parent to the comment it answers" do
+    get comment_url(comments(:reply_to_first))
+    assert_response :success
+    assert_select "#comment-#{comments(:reply_to_first).id} > .comment-meta > a[href=?]",
+      comment_path(comments(:first)), text: "parent"
+  end
+
+  test "a flat comment listing shows the parent link" do
+    # favorite_comments renders comments/_listed; favorite a reply so its parent
+    # points to the comment it answers.
+    Favorite.create!(user: users(:alice), favoritable: comments(:reply_to_first))
+    get favorite_comments_user_url(users(:alice))
+    assert_response :success
+    assert_select "#comment-#{comments(:reply_to_first).id} > .comment-meta > a[href=?]",
+      comment_path(comments(:first)), text: "parent"
+  end
 end
