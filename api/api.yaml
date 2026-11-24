@@ -1,0 +1,250 @@
+openapi: 3.0.3
+
+info:
+  title: Hacker News clone API
+  version: 1.0.0
+  description: |
+    API REST de nivell 2 (Richardson Maturity Model) del clon de Hacker News:
+    recursos amb URI pròpia i ús correcte dels verbs i codis d'estat HTTP. Les
+    peticions i respostes són JSON. El disseny complet (recursos, URIs, codis
+    d'estat i format d'error) és a `docs/api-design.md`.
+
+    Autenticació: TOTES les peticions han de portar la capçalera `X-API-KEY`
+    amb l'api-key de l'usuari, que es pot copiar des del seu perfil.
+
+servers:
+  - url: https://practica1-65h7.onrender.com
+    description: Producció (Render)
+  - url: http://localhost:3000
+    description: Desenvolupament local
+
+# L'api-key s'aplica a totes les operacions (API-02). Es pot sobreescriure per
+# operació si mai calgués, però per defecte tota l'API la requereix.
+security:
+  - apiKey: []
+
+tags:
+  - name: submissions
+    description: Enllaços i preguntes (Ask HN).
+  - name: comments
+    description: Comentaris i respostes.
+  - name: votes
+    description: Vots sobre submissions i comments.
+  - name: favorites
+    description: Favorits sobre submissions i comments.
+  - name: hidden
+    description: Submissions amagades per l'usuari.
+  - name: users
+    description: Perfils d'usuari i la seva activitat.
+
+# Els paths es completen a mesura que s'implementen els endpoints (DOC-02: cada
+# PR d'endpoint hi afegeix el seu path).
+paths:
+  /api/v1/submissions:
+    get:
+      tags: [submissions]
+      operationId: listSubmissions
+      summary: Llista submissions (news/newest/ask) i cerca per títol.
+      description: |
+        Retorna el llistat news (tipus url, per points), newest (per data, de
+        més recent a menys) o ask (només tipus ask). Amb `q` cerca pel títol
+        sense distingir majúscules; sense `list`, la cerca es fa sobre totes les
+        submissions ordenades per points. Les submissions que l'usuari de
+        l'api-key ha amagat queden excloses. Si no hi ha resultats, retorna un
+        array buit amb 200.
+      parameters:
+        - name: list
+          in: query
+          required: false
+          description: Quin llistat tornar (per defecte news).
+          schema:
+            type: string
+            enum: [news, newest, ask]
+            default: news
+        - name: q
+          in: query
+          required: false
+          description: Paraula a cercar dins del títol (case-insensitive).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Llista de submissions (array buit si no n'hi ha cap).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Submission"
+        "400":
+          description: El paràmetre `list` té un valor no permès.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+      description: Api-key de l'usuari (del seu perfil). Obligatòria a cada petició.
+
+  schemas:
+    UserRef:
+      type: object
+      description: Referència breu a un usuari, inclosa dins de submissions i comments.
+      properties:
+        id:
+          type: integer
+          example: 2
+        username:
+          type: string
+          example: alice
+
+    SubmissionRef:
+      type: object
+      description: Referència breu a una submission, inclosa als comments dels llistats plans.
+      properties:
+        id:
+          type: integer
+          example: 7
+        title:
+          type: string
+          example: "Show HN: My project"
+
+    Submission:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 7
+        title:
+          type: string
+          example: "Show HN: My project"
+        url:
+          type: string
+          nullable: true
+          example: "https://github.com/foo/bar"
+        domain:
+          type: string
+          nullable: true
+          example: github.com
+        text:
+          type: string
+          nullable: true
+        submission_type:
+          type: string
+          enum: [url, ask]
+        points:
+          type: integer
+          example: 12
+        comments_count:
+          type: integer
+          example: 3
+        user:
+          $ref: "#/components/schemas/UserRef"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 21
+        body:
+          type: string
+          example: Great post
+        points:
+          type: integer
+          example: 2
+        user:
+          $ref: "#/components/schemas/UserRef"
+        submission_id:
+          type: integer
+          example: 7
+        parent_id:
+          type: integer
+          nullable: true
+          description: null en un comment directe; id del comment pare en una resposta (COM-05).
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        replies:
+          type: array
+          description: Només a l'arbre (GET /api/v1/submissions/{id}, GET /api/v1/comments/{id}), en ordre cronològic.
+          items:
+            $ref: "#/components/schemas/Comment"
+        submission:
+          description: Només als llistats plans (GET /api/v1/comments, /users/{id}/comments, favorites, upvoted).
+          allOf:
+            - $ref: "#/components/schemas/SubmissionRef"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+        username:
+          type: string
+          example: alice
+        about:
+          type: string
+          example: "Hi!"
+        karma:
+          type: integer
+          example: 25
+        avatar_url:
+          type: string
+          format: uri
+        banner_url:
+          type: string
+          format: uri
+        email:
+          type: string
+          format: email
+          nullable: true
+          description: Només es retorna a l'usuari propietari. L'api-key no es retorna mai.
+        created_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          description: Codi estable per a màquines.
+          enum:
+            - bad_request
+            - unauthorized
+            - forbidden
+            - not_found
+            - conflict
+            - unprocessable_entity
+            - internal_server_error
+        message:
+          type: string
+          example: Validation failed
+        details:
+          type: object
+          nullable: true
+          description: "Opcional. 422: errors per camp. 409: existing_submission_id en una url duplicada."
+          additionalProperties: true
