@@ -6,8 +6,10 @@
     <li class="comment" id="comment-<%= comment.id %>">
       <div class="comment-meta">
         <%= link_to comment.user.username, user_path(comment.user) %>
-        <%= time_ago_in_words(comment.created_at) %> ago
+        <%= link_to "#{time_ago_in_words(comment.created_at)} ago", comment_path(comment) %>
         | <%= link_to "on: #{comment.submission.title}", submission_path(comment.submission) %>
+        <%# COM-05: "parent" -> parent comment (if a reply) or the submission. %>
+        | <%= link_to "parent", comment_parent_path(comment) %>
       </div>
       <div class="comment-body"><%= simple_format(comment.body) %></div>
 
@@ -18,7 +20,9 @@
             <li class="comment" id="comment-<%= reply.id %>">
               <div class="comment-meta">
                 <%= link_to reply.user.username, user_path(reply.user) %>
-                <%= time_ago_in_words(reply.created_at) %> ago
+                <%= link_to "#{time_ago_in_words(reply.created_at)} ago", comment_path(reply) %>
+                <%# COM-05: "parent" -> the comment this reply answers. %>
+                | <%= link_to "parent", comment_parent_path(reply) %>
               </div>
               <div class="comment-body"><%= simple_format(reply.body) %></div>
             </li>

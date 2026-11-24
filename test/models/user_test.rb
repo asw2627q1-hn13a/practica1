@@ -51,12 +51,22 @@ class UserTest < ActiveSupport::TestCase
   test "a new user gets an api-key automatically" do
     user = User.create!(provider: "github", uid: "api-1", username: "apiuser")
     assert user.api_key.present?
-    assert_operator user.api_key.length, :>=, 20
+    # base58 token of 24 chars (has_secure_token). Checking the exact format
+    # makes the test fail if the generation mechanism changes unnoticed.
+    assert_match(/\A[1-9A-HJ-NP-Za-km-z]{24}\z/, user.api_key)
   end
 
   test "two users get different api-keys" do
     a = User.create!(provider: "github", uid: "api-2", username: "apiuser2")
     b = User.create!(provider: "github", uid: "api-3", username: "apiuser3")
     assert_not_equal a.api_key, b.api_key
+  end
+
+  test "the database rejects a duplicate api-key" do
+    a = User.create!(provider: "github", uid: "api-4", username: "apiuser4")
+    b = User.create!(provider: "github", uid: "api-5", username: "apiuser5")
+    assert_raises(ActiveRecord::RecordNotUnique) do
+      b.update_columns(api_key: a.api_key)
+    end
   end
 end
