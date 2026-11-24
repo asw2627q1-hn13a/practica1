@@ -5,9 +5,11 @@ alice:
   provider: github
   uid: "1"
   email: alice@example.com
+  api_key: alice_api_key_fixture_000001
 
 bob:
   username: bob
   provider: github
   uid: "2"
   email: bob@example.com
+  api_key: bob_api_key_fixture_0000002
