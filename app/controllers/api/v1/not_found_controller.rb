@@ -4,6 +4,10 @@
 module Api
   module V1
     class NotFoundController < BaseController
+      # Una ruta inexistent és 404 amb api-key o sense (API-02): no revela cap
+      # dada i el disseny diu que tot /api/* que no existeix respon 404.
+      skip_before_action :authenticate_api_key!
+
       def show
         render_error(404, "No route matches #{request.request_method} #{request.path}")
       end
