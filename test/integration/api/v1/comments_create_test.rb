@@ -95,6 +95,81 @@ class Api::V1::CommentsCreateTest < ActionDispatch::IntegrationTest
     assert_equal "bad_request", json["error"]
   end
 
+  # --- replies to a comment ------------------------------------------------------
+
+  test "replying to a comment links the reply to its parent and submission" do
+    submission = @root.submission
+    assert_difference -> { @root.replies.count } => 1,
+                      -> { submission.reload.comments_count } => 1 do
+      post_json replies_path(@root), { body: "I agree" }, user: @bob
+    end
+
+    assert_response :created
+    assert_match %r{application/json}, response.media_type
+    assert_equal expected_json(Comment.find(json["id"])), json
+    assert_equal "I agree", json["body"]
+    assert_equal({ "id" => @bob.id, "username" => "bob" }, json["user"])
+    assert_equal @root.id, json["parent_id"]
+    assert_equal submission.id, json["submission_id"]
+  end
+
+  test "a reply can be replied at any depth" do
+    parent_id = @nested.id
+    3.times do |i|
+      post_json "/api/v1/comments/#{parent_id}/replies", { body: "level #{i}" }, user: @alice
+
+      assert_response :created
+      assert_equal parent_id, json["parent_id"]
+      assert_equal @nested.submission_id, json["submission_id"]
+      parent_id = json["id"]
+    end
+  end
+
+  test "a reply ignores every field of the body except the text" do
+    post_json replies_path(@root),
+              { body: "Hi", user_id: @alice.id, points: 99, parent_id: @nested.id,
+                submission_id: @submission.id },
+              user: @bob
+
+    assert_response :created
+    reply = Comment.find(json["id"])
+    assert_equal @bob, reply.user
+    assert_equal 0, reply.points
+    assert_equal @root, reply.parent
+    assert_equal @root.submission, reply.submission
+  end
+
+  test "a reply without text is 422 and is not saved" do
+    BLANK_BODIES.each do |body|
+      assert_no_difference "Comment.count" do
+        post_json replies_path(@root), body, user: @alice
+      end
+      assert_blank_body_error
+    end
+    assert_equal 3, @root.submission.reload.comments_count
+  end
+
+  test "replying to a missing comment is 404, even without text" do
+    [ { body: "Hi" }, {} ].each do |body|
+      assert_no_difference "Comment.count" do
+        post_json "/api/v1/comments/0/replies", body, user: @alice
+      end
+      assert_response :not_found
+      assert_equal "not_found", json["error"]
+      assert_equal "Comment with id=0 not found", json["message"]
+    end
+  end
+
+  test "replying requires an api-key, even if the comment does not exist" do
+    [ replies_path(@root), "/api/v1/comments/0/replies" ].each do |path|
+      assert_no_difference "Comment.count" do
+        post_json path, { body: "Hi" }
+      end
+      assert_response :unauthorized
+      assert_equal "unauthorized", json["error"]
+    end
+  end
+
   private
 
   def comments_path(submission)
