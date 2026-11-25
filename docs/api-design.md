@@ -34,7 +34,7 @@ documentaran DOC-01 i DOC-02 a `api/api.yaml`. Les rutes estan definides a
 | **200 OK** | GET, PUT i accions que retornen un recurs o dades (p. ex. els `points` en desvotar). |
 | **201 Created** | POST que crea un recurs. |
 | **204 No Content** | DELETE correcte sense cos. |
-| **400 Bad Request** | Cos que no és JSON vàlid, falta un paràmetre obligatori o un paràmetre de consulta té un valor no permès (p. ex. `list=foo`). |
+| **400 Bad Request** | Cos que no és JSON vàlid, falta un paràmetre obligatori (excepte el `body` en crear un comment o una resposta: 422, vegeu §2.2) o un paràmetre de consulta té un valor no permès (p. ex. `list=foo`). |
 | **401 Unauthorized** | Falta l'api-key o no correspon a cap usuari. |
 | **403 Forbidden** | L'api-key és vàlida però l'usuari no pot fer l'acció: contingut d'un altre usuari, votar el contingut propi, llistats privats d'un altre usuari. |
 | **404 Not Found** | El recurs (o el recurs pare) no existeix. També una ruta inexistent sota `/api/v1`. |
@@ -102,6 +102,7 @@ Amb `url` vàlida és tipus `url`; sense `url`, tipus `ask`. Si la `url` ja exis
 | DELETE | `/comments/{id}` | `deleteComment` | API-09 | 204 | 403, 404 |
 
 - Cos de creació i edició: `{ "body": "..." }`. Una resposta (`replies`) hereta la submission del comment pare.
+- En crear un comment o una resposta, si `body` no hi és, és `null`, buit o només té espais: **422** amb `details.body` (no 400).
 - `GET /comments` retorna els comments de tots els usuaris, del més recent al més antic, **plans** (sense arbre).
 - `GET /comments/{id}` retorna el comment amb el seu **subarbre** a `replies`.
 - Esborrar un comment esborra les seves respostes (igual que la web).
