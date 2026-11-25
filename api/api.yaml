@@ -89,6 +89,114 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /api/v1/submissions/{submissionId}/comments:
+    post:
+      tags: [comments]
+      operationId: addComment
+      summary: Afegeix un comment a una submission.
+      description: |
+        Crea un comment directe (sense pare) a la submission. L'autor és
+        l'usuari de l'api-key; qualsevol camp del cos que no sigui `body`
+        s'ignora.
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          description: Id de la submission.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentInput"
+      responses:
+        "201":
+          description: Comment creat.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          description: El cos no és JSON vàlid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: La submission no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: El `body` falta o és buit (o només té espais).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/comments/{commentId}/replies:
+    post:
+      tags: [comments]
+      operationId: replyToComment
+      summary: Respon a un comment de qualsevol profunditat.
+      description: |
+        Crea una resposta vinculada al comment pare i a la seva submission.
+        L'autor és l'usuari de l'api-key; qualsevol camp del cos que no sigui
+        `body` s'ignora.
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          description: Id del comment pare.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentInput"
+      responses:
+        "201":
+          description: Resposta creada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          description: El cos no és JSON vàlid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: El comment pare no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: El `body` falta o és buit (o només té espais).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   securitySchemes:
     apiKey:
@@ -194,6 +302,16 @@ components:
           description: Només als llistats plans (GET /api/v1/comments, /users/{id}/comments, favorites, upvoted).
           allOf:
             - $ref: "#/components/schemas/SubmissionRef"
+
+    CommentInput:
+      type: object
+      description: Cos per crear un comment o una resposta.
+      required: [body]
+      properties:
+        body:
+          type: string
+          description: Text del comment; no pot ser buit ni només espais.
+          example: Great post
 
     User:
       type: object
