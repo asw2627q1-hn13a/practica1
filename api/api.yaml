@@ -89,6 +89,44 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /api/v1/submissions/{id}:
+    get:
+      tags: [submissions]
+      operationId: getSubmission
+      summary: Obté una submission amb el seu arbre de comments.
+      description: |
+        Retorna la submission amb tots els seus comments niats com a arbre: a
+        `comments` hi ha els comments directes i cada comment té les seves
+        respostes a `replies`, a qualsevol profunditat. A tots els nivells van
+        del més antic al més recent (amb la mateixa data, primer l'id més
+        petit). També es retorna si l'usuari de l'api-key l'ha amagada.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de la submission.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: La submission i el seu arbre de comments (`comments` és un array buit si no en té).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmissionWithComments"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: La submission no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /api/v1/submissions/{submissionId}/comments:
     post:
       tags: [comments]
@@ -265,6 +303,18 @@ components:
         updated_at:
           type: string
           format: date-time
+
+    SubmissionWithComments:
+      description: Una submission amb el seu arbre de comments (GET /api/v1/submissions/{id}).
+      allOf:
+        - $ref: "#/components/schemas/Submission"
+        - type: object
+          properties:
+            comments:
+              type: array
+              description: Comments directes, en ordre cronològic; les respostes són a `replies` de cada comment.
+              items:
+                $ref: "#/components/schemas/Comment"
 
     Comment:
       type: object
