@@ -1,6 +1,7 @@
 module Api
   module V1
     # API-03: list submissions (news / newest / ask) and search them by title.
+    # API-05: get a submission with its comment tree.
     class SubmissionsController < BaseController
       LISTS = %w[news newest ask].freeze
 
@@ -30,6 +31,21 @@ module Api
 
         scope = scope.where.not(id: current_user.hides.select(:submission_id))
         render json: SubmissionSerializer.list(scope.includes(:user))
+      end
+
+      # GET /api/v1/submissions/:id
+      #
+      # The submission plus `comments`: its complete comment tree, oldest first
+      # at every level (same date: lowest id first). 404 if it does not exist. A
+      # submission hidden by the api-key user is shown too: hiding only affects
+      # the listings.
+      def show
+        submission = Submission.find(params[:id])
+        comments = submission.comments.chronological.order(:id).includes(:user)
+        body = SubmissionSerializer.new(submission).as_json
+                                   .merge(comments: CommentTreeSerializer.new(comments).as_json)
+
+        render json: body
       end
 
       private
