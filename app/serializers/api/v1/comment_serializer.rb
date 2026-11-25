@@ -5,6 +5,10 @@ module Api
     # fields: `replies` (trees) and `submission` (flat listings) are added by
     # the stories that need them.
     class CommentSerializer
+      def self.list(comments)
+        comments.map { |comment| new(comment).as_json }
+      end
+
       def initialize(comment)
         @comment = comment
       end
