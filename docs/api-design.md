@@ -53,6 +53,10 @@ controladors de l'API:
 - `current_user` → l'usuari de l'api-key; és l'únic origen de l'usuari actiu.
 - `authorize_owner!(registre)` → 403 si el registre no és de `current_user`. Es crida dins
   de l'acció **després** de trobar el registre (així un id inexistent dona 404 abans que 403).
+  Accepta submissions i comments (propietari = `user_id`) i també un **User** (propietari = ell
+  mateix; API-15/16/17). Missatge per defecte: `You can only modify your own submissions`,
+  `... comments` o `... profile`; amb `message:` se'n pot passar un de propi (p. ex. API-17,
+  que no modifica sinó que llegeix llistats privats).
 
 ---
 
