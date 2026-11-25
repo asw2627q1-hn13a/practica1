@@ -197,6 +197,73 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /api/v1/comments:
+    get:
+      tags: [comments]
+      operationId: listComments
+      summary: Llista els últims comments de tots els usuaris.
+      description: |
+        Retorna els comments de tots els usuaris, del més recent al més antic,
+        en llista plana (sense arbre). Cada comment inclou l'autor, el temps de
+        creació, el text i la submission a la qual pertany (`submission`). Si no
+        n'hi ha cap, retorna un array buit amb 200.
+      responses:
+        "200":
+          description: Llista de comments (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/users/{id}/threads:
+    get:
+      tags: [users]
+      operationId: listUserThreads
+      summary: Threads d'un usuari (els seus comments amb les respostes rebudes).
+      description: |
+        Retorna els comments de l'usuari, del més recent al més antic. Cada
+        comment inclou a `replies` les respostes directes que ha rebut, en ordre
+        cronològic, i la submission a la qual pertany (`submission`). És públic:
+        qualsevol api-key vàlida pot consultar els threads de qualsevol usuari
+        (també els de l'usuari de l'api-key). Si l'usuari no té comments,
+        retorna un array buit amb 200.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Threads de l'usuari (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   securitySchemes:
     apiKey:
