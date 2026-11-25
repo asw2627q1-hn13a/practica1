@@ -45,7 +45,9 @@ module Api
         body = SubmissionSerializer.new(submission).as_json
                                    .merge(comments: CommentTreeSerializer.new(comments).as_json)
 
-        render json: body
+        # Not `render json: body`: it fails (500) from 50 levels of replies on,
+        # because Rails allows at most 100 levels of nested JSON.
+        render json: JSON.generate(body, max_nesting: 0)
       end
 
       private

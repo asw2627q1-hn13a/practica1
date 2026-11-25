@@ -100,6 +100,26 @@ class Api::V1::SubmissionsShowTest < ActionDispatch::IntegrationTest
     assert_equal created.map(&:id).sort, json["comments"].first(3).map { |c| c["id"] }
   end
 
+  test "a conversation of 60 levels is returned complete" do
+    expected = [ @first.id ]
+    parent = @first
+    59.times do |i|
+      parent = add_comment("level #{i}", parent: parent, created_at: 4.hours.ago)
+      expected << parent.id
+    end
+    get_submission @submission
+    assert_response :ok
+
+    # Follow the branch down: the level of each comment must match.
+    ids = []
+    level = json["comments"].find { |c| c["id"] == @first.id }
+    while level
+      ids << level["id"]
+      level = level["replies"].find { |c| expected.include?(c["id"]) }
+    end
+    assert_equal expected, ids
+  end
+
   test "the number of queries does not grow with the number of comments" do
     before = count_queries { get_submission @submission }
     parent = @first
@@ -135,8 +155,9 @@ class Api::V1::SubmissionsShowTest < ActionDispatch::IntegrationTest
     get "/api/v1/submissions/#{submission.id}", headers: { "X-API-KEY" => user.api_key }
   end
 
+  # max_nesting: JSON.parse rejects more than 100 levels by default.
   def json
-    JSON.parse(response.body)
+    JSON.parse(response.body, max_nesting: false)
   end
 
   def add_comment(body, created_at:, parent: nil)
