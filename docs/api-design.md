@@ -43,7 +43,16 @@ documentaran DOC-01 i DOC-02 a `api/api.yaml`. Les rutes estan definides a
 | **500 Internal Server Error** | Error inesperat del servidor. Mateix format JSON, amb un missatge genèric (el detall només queda al log). |
 
 **Ordre de comprovació:** 401 → 404 → 403 → 400/422/409. Una petició sense api-key
-sempre és 401, encara que el recurs no existeixi.
+sempre és 401, encara que el recurs no existeixi. L'única excepció són les **rutes**
+inexistents sota `/api`, que responen 404 amb api-key o sense.
+
+**Implementació (API-02):** a `Api::V1::BaseController`, del qual hereten tots els
+controladors de l'API:
+
+- `before_action :authenticate_api_key!` → 401 si falta `X-API-KEY` o no és de cap usuari.
+- `current_user` → l'usuari de l'api-key; és l'únic origen de l'usuari actiu.
+- `authorize_owner!(registre)` → 403 si el registre no és de `current_user`. Es crida dins
+  de l'acció **després** de trobar el registre (així un id inexistent dona 404 abans que 403).
 
 ---
 
