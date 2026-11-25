@@ -23,7 +23,7 @@ documentaran DOC-01 i DOC-02 a `api/api.yaml`. Les rutes estan definides a
 | Usuari actiu | S'obté **sempre de l'api-key**, mai del cos de la petició (un `user_id` al JSON s'ignora). |
 | Actualització | `PUT` amb semàntica parcial: només es modifiquen els camps enviats i només els editables. `points`, `user`, `submission_type`, `id` i dates mai es poden modificar. (Rails també accepta `PATCH` com a àlies, però no es documenta.) |
 | Llistats | Sempre un array JSON; si no hi ha resultats, `[]` amb `200`. Sense paginació (la web tampoc en té). |
-| CORS | Habilitat per a `https://editor.swagger.io` (INF-05); ha de permetre `GET, POST, PUT, DELETE, OPTIONS` i la capçalera `X-API-KEY`. |
+| CORS | Habilitat només per a `https://editor.swagger.io` i només sota `/api/*` (INF-05, `config/initializers/cors.rb` amb la gem `rack-cors`): mètodes `GET, POST, PUT, DELETE, OPTIONS` i capçaleres `Accept`, `Content-Type` i `X-API-KEY`. El preflight `OPTIONS` el respon el middleware sense api-key. Per provar l'editor contra `localhost`, Chrome demana permís d'accés a la xarxa local (*Local Network Access*); contra l'URL desplegada no cal. |
 | Rutes inexistents | Tot el prefix `/api` és reservat a l'API: qualsevol ruta que no existeixi (`/api/v1/foo`, `/api/v2/...`, `/api/foo`) respon **404 en JSON**. Un **verb no definit sobre una ruta existent** (p. ex. `DELETE /api/v1/submissions`) també respon **404**, no 405: Rails no calcula la capçalera `Allow` i no val la pena complicar-ho. Fora de `/api`, les pàgines d'error de la web continuen sent HTML. |
 | Fora de l'API | Login, registre i logout (l'enunciat els exclou). No hi ha `POST /users` ni `DELETE /users/{id}`. |
 
