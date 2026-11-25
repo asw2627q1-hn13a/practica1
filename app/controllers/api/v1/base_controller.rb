@@ -22,6 +22,7 @@
 #   del cos de la petició.
 # - Les accions que modifiquen contingut d'un usuari (PUT, DELETE) criden
 #   `authorize_owner!(registre)`, que respon 403 si no és de `current_user`.
+#   També accepta un User (el propietari és ell mateix).
 module Api
   module V1
     class BaseController < ActionController::API
@@ -87,13 +88,27 @@ module Api
         render_error(401, "API key is missing or invalid") unless @current_user
       end
 
-      # 403 si `record` (submission, comment...) no és de l'usuari de l'api-key.
-      # Ús dins d'una acció: `authorize_owner!(submission)` abans de modificar-lo.
-      def authorize_owner!(record)
-        return if record.user_id == current_user.id
+      # 403 si `record` no és de l'usuari de l'api-key. Ús dins d'una acció,
+      # després del `find` (així un id inexistent dona 404 i no 403):
+      #
+      #   authorize_owner!(submission)   # API-06, API-09: contingut propi
+      #   authorize_owner!(user)         # API-15, API-16: el propi perfil
+      #   authorize_owner!(user, message: "You can only see your own hidden submissions")  # API-17
+      #
+      # Un User no té user_id: el seu propietari és ell mateix. `message:` permet
+      # un text propi quan l'acció no és modificar (p. ex. llistats privats).
+      def authorize_owner!(record, message: nil)
+        owner_id = record.is_a?(User) ? record.id : record.user_id
+        return if owner_id == current_user.id
 
-        raise ForbiddenError,
-              "You can only modify your own #{record.model_name.human.downcase.pluralize}"
+        raise ForbiddenError, message || forbidden_message(record)
+      end
+
+      # Missatge per defecte del 403 segons el tipus de registre.
+      def forbidden_message(record)
+        return "You can only modify your own profile" if record.is_a?(User)
+
+        "You can only modify your own #{record.model_name.human.downcase.pluralize}"
       end
 
       # Resposta d'error amb el format comú. `status` és un enter (400, 401, 403,
