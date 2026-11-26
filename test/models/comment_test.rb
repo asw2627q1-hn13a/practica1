@@ -60,4 +60,43 @@ class CommentTest < ActiveSupport::TestCase
       parent.destroy
     end
   end
+
+  # API-09 -------------------------------------------------------------------
+
+  test "destroying a comment deletes a very deep conversation under it" do
+    submission = submissions(:ask_one)
+    root = parent = submission.comments.create!(body: "root", user: users(:bob))
+    300.times do |i|
+      parent = submission.comments.create!(body: "level #{i}", user: users(:bob), parent: parent)
+    end
+
+    assert_difference -> { Comment.count } => -301, -> { submission.reload.comments_count } => -301 do
+      root.destroy!
+    end
+  end
+
+  test "destroying a comment deletes its replies at every level and nothing else" do
+    submission = submissions(:ask_one)
+    root = submission.comments.create!(body: "root", user: users(:bob))
+    branch = submission.comments.create!(body: "branch", user: users(:bob), parent: root)
+    leaf = submission.comments.create!(body: "leaf", user: users(:bob), parent: branch)
+    sibling = submission.comments.create!(body: "sibling", user: users(:bob), parent: root)
+
+    branch.destroy!
+
+    assert_not Comment.exists?(branch.id)
+    assert_not Comment.exists?(leaf.id)
+    assert Comment.exists?(root.id)
+    assert Comment.exists?(sibling.id)
+  end
+
+  test "destroying a comment deletes its replies even if they have a lower id" do
+    parent = comments(:first)
+    reply = comments(:reply_to_first)
+    reply.update_columns(id: parent.id - 1) if reply.id > parent.id
+
+    assert_difference "Comment.count", -2 do
+      parent.reload.destroy!
+    end
+  end
 end
