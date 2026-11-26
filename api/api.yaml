@@ -286,6 +286,334 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  # API-11: un usuari té com a molt un vot per element; l'element i l'api-key
+  # identifiquen el vot (no hi ha id de vot). Les respostes porten els points.
+  /api/v1/submissions/{submissionId}/votes:
+    post:
+      tags: [votes]
+      operationId: voteSubmission
+      summary: Vota una submission d'un altre usuari.
+      description: |
+        Suma un point a la submission. El votant és l'usuari de l'api-key.
+        No es pot votar el contingut propi ni votar dues vegades.
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          description: Id de la submission.
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Vot creat. Retorna els points actualitzats.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [points]
+                properties:
+                  points:
+                    type: integer
+                    example: 13
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: La submission és de l'usuari de l'api-key (no es pot votar el contingut propi).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: La submission no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: L'usuari ja havia votat aquesta submission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [votes]
+      operationId: unvoteSubmission
+      summary: Treu el vot propi d'una submission.
+      description: |
+        Resta un point a la submission. A diferència de `.../favorites` i
+        `.../hidden` (204), respon 200 amb els points actualitzats.
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          description: Id de la submission.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Vot esborrat. Retorna els points actualitzats.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [points]
+                properties:
+                  points:
+                    type: integer
+                    example: 12
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: La submission no existeix o l'usuari no l'havia votada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/comments/{commentId}/votes:
+    post:
+      tags: [votes]
+      operationId: voteComment
+      summary: Vota un comment d'un altre usuari.
+      description: |
+        Suma un point al comment. El votant és l'usuari de l'api-key.
+        No es pot votar el contingut propi ni votar dues vegades.
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          description: Id del comment.
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Vot creat. Retorna els points actualitzats.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [points]
+                properties:
+                  points:
+                    type: integer
+                    example: 3
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: El comment és de l'usuari de l'api-key (no es pot votar el contingut propi).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: El comment no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: L'usuari ja havia votat aquest comment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [votes]
+      operationId: unvoteComment
+      summary: Treu el vot propi d'un comment.
+      description: Resta un point al comment i respon 200 amb els points actualitzats.
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          description: Id del comment.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Vot esborrat. Retorna els points actualitzats.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [points]
+                properties:
+                  points:
+                    type: integer
+                    example: 2
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: El comment no existeix o l'usuari no l'havia votat.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # API-12: es pot marcar com a favorit qualsevol element, també el propi.
+  # Com els vots, l'element i l'api-key identifiquen el favorit.
+  /api/v1/submissions/{submissionId}/favorites:
+    post:
+      tags: [favorites]
+      operationId: favoriteSubmission
+      summary: Afegeix una submission als favorits.
+      description: |
+        Afegeix la submission als favorits de l'usuari de l'api-key. Es pot
+        marcar també una submission pròpia.
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          description: Id de la submission.
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Afegida als favorits.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [favorited]
+                properties:
+                  favorited:
+                    type: boolean
+                    example: true
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: La submission no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: La submission ja era als favorits de l'usuari.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [favorites]
+      operationId: unfavoriteSubmission
+      summary: Treu una submission dels favorits.
+      description: Respon 204 sense cos (a diferència de `.../votes`, que retorna els points).
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          description: Id de la submission.
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Treta dels favorits.
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: La submission no existeix o no era als favorits de l'usuari.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/comments/{commentId}/favorites:
+    post:
+      tags: [favorites]
+      operationId: favoriteComment
+      summary: Afegeix un comment als favorits.
+      description: |
+        Afegeix el comment als favorits de l'usuari de l'api-key. Es pot
+        marcar també un comment propi.
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          description: Id del comment.
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Afegit als favorits.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [favorited]
+                properties:
+                  favorited:
+                    type: boolean
+                    example: true
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: El comment no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: El comment ja era als favorits de l'usuari.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [favorites]
+      operationId: unfavoriteComment
+      summary: Treu un comment dels favorits.
+      description: Respon 204 sense cos.
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          description: Id del comment.
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Tret dels favorits.
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: El comment no existeix o no era als favorits de l'usuari.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /api/v1/comments:
     get:
       tags: [comments]
