@@ -312,6 +312,103 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /api/v1/comments/{id}:
+    put:
+      tags: [comments]
+      operationId: updateComment
+      summary: Edita el text d'un comment propi.
+      description: |
+        Només l'autor. Només es pot canviar el text (`body`); qualsevol altre
+        camp s'ignora. Un cos sense `body` respon 200 sense canvis. Retorna el
+        comment actualitzat, sense `replies` ni `submission`. Serveix igual per a
+        un comment directe que per a una resposta.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del comment.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentUpdateInput"
+      responses:
+        "200":
+          description: Comment actualitzat.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          description: El cos no és JSON vàlid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: El comment és d'un altre usuari; no es canvia res.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: El comment no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: El `body` és buit, `null` o només té espais; `details.body` té l'error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [comments]
+      operationId: deleteComment
+      summary: Esborra un comment propi.
+      description: |
+        Només l'autor. Esborra el comment amb totes les seves respostes, a
+        qualsevol profunditat, i els vots i favorits que en depenen (igual que
+        la web).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del comment.
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Esborrat; la resposta no té cos.
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: El comment és d'un altre usuari; no s'esborra res.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: El comment no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /api/v1/users/{id}/threads:
     get:
       tags: [users]
@@ -480,6 +577,17 @@ components:
           type: string
           description: Text del comment; no pot ser buit ni només espais.
           example: Great post
+
+    CommentUpdateInput:
+      type: object
+      description: |
+        Cos per editar un comment (PUT). L'únic camp editable és `body`;
+        qualsevol altre camp s'ignora. Si no s'envia `body`, no canvia res.
+      properties:
+        body:
+          type: string
+          description: Text nou del comment; no pot ser buit, `null` ni només espais.
+          example: Great post (edited)
 
     User:
       type: object
