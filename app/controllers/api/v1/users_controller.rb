@@ -41,6 +41,31 @@ module Api
         render json: CommentSerializer.flat(favorited(find_user, "Comment", %i[user submission]))
       end
 
+      # GET /api/v1/users/:id/hidden
+      def hidden
+        user = find_user
+        authorize_owner!(user, message: "You can only see your own hidden submissions")
+
+        hides = user.hides.includes(submission: :user).order(created_at: :desc, id: :desc)
+        render json: SubmissionSerializer.list(hides.map(&:submission))
+      end
+
+      # GET /api/v1/users/:id/upvoted/submissions
+      def upvoted_submissions
+        user = find_user
+        authorize_owner!(user, message: "You can only see your own upvoted submissions")
+
+        render json: SubmissionSerializer.list(voted(user, "Submission", :user))
+      end
+
+      # GET /api/v1/users/:id/upvoted/comments
+      def upvoted_comments
+        user = find_user
+        authorize_owner!(user, message: "You can only see your own upvoted comments")
+
+        render json: CommentSerializer.flat(voted(user, "Comment", %i[user submission]))
+      end
+
       # GET /api/v1/users/:id/threads
       #
       # The user's comments (newest first), each with the replies it has
@@ -76,6 +101,14 @@ module Api
             .order(created_at: :desc, id: :desc)
             .includes(favoritable: preload)
             .map(&:favoritable)
+      end
+
+      # The items the user voted for, most recently voted first.
+      def voted(user, type, preload)
+        user.votes.where(votable_type: type)
+            .order(created_at: :desc, id: :desc)
+            .includes(votable: preload)
+            .map(&:votable)
       end
     end
   end

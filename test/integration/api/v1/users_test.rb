@@ -1,6 +1,6 @@
 require "test_helper"
 
-# API-14: GET /api/v1/users/:id and its submissions, comments and favorites.
+# API-14/API-17: user profile, activity, hidden submissions and upvoted items.
 #
 # Fixtures: alice has url_high (100 points) and ask_one (5 points), and the
 # comments "first" and "on_low"; bob has url_low (10 points) and the comments
@@ -124,6 +124,81 @@ class Api::V1::UsersTest < ActionDispatch::IntegrationTest
     assert_equal submissions(:url_high).id, json.last["submission"]["id"]
   end
 
+  test "hidden submissions are private and ordered by when hidden" do
+    Hide.create!(user: @alice, submission: submissions(:url_high), created_at: 2.days.ago)
+    Hide.create!(user: @alice, submission: submissions(:ask_one), created_at: 1.day.ago)
+    Hide.create!(user: @bob, submission: submissions(:url_low))
+
+    get_as @alice, "/api/v1/users/#{@alice.id}/hidden"
+
+    assert_response :ok
+    assert_equal [ submissions(:ask_one).id, submissions(:url_high).id ], json.map { |s| s["id"] }
+
+    get_as @bob, "/api/v1/users/#{@alice.id}/hidden"
+    assert_response :forbidden
+  end
+
+  test "upvoted submissions are private and ordered by when voted" do
+    newer_submission = Submission.create!(
+      user: @bob,
+      title: "Another submission",
+      url: "https://example.net/another",
+      submission_type: "url"
+    )
+    Vote.create!(user: @alice, votable: submissions(:url_low), created_at: 2.days.ago)
+    Vote.create!(user: @alice, votable: newer_submission, created_at: 1.day.ago)
+    Vote.create!(user: @alice, votable: comments(:second))
+    Vote.create!(user: @bob, votable: submissions(:url_high))
+
+    get_as @alice, "/api/v1/users/#{@alice.id}/upvoted/submissions"
+
+    assert_response :ok
+    assert_equal [ newer_submission.id, submissions(:url_low).id ], json.map { |s| s["id"] }
+    assert_equal "bob", json.first["user"]["username"]
+  end
+
+  test "upvoted comments are private, ordered by vote time and include their submission" do
+    Vote.create!(user: @alice, votable: comments(:second), created_at: 2.days.ago)
+    Vote.create!(user: @alice, votable: comments(:reply_to_first), created_at: 1.day.ago)
+    Vote.create!(user: @alice, votable: submissions(:url_low))
+    Vote.create!(user: @bob, votable: comments(:first))
+
+    get_as @alice, "/api/v1/users/#{@alice.id}/upvoted/comments"
+
+    assert_response :ok
+    assert_equal [ comments(:reply_to_first).id, comments(:second).id ], json.map { |c| c["id"] }
+    assert_equal submissions(:url_high).id, json.first["submission"]["id"]
+    assert json.all? { |comment| comment["user"]["id"] == @bob.id }
+  end
+
+  test "unhide and unvote remove items from the private activity lists" do
+    post "/api/v1/submissions/#{submissions(:url_low).id}/hidden", headers: auth(@alice)
+    post "/api/v1/submissions/#{submissions(:url_low).id}/votes", headers: auth(@alice)
+    post "/api/v1/comments/#{comments(:second).id}/votes", headers: auth(@alice)
+
+    get_as @alice, "/api/v1/users/#{@alice.id}/hidden"
+    assert_includes json.map { |submission| submission["id"] }, submissions(:url_low).id
+
+    get_as @alice, "/api/v1/users/#{@alice.id}/upvoted/submissions"
+    assert_includes json.map { |submission| submission["id"] }, submissions(:url_low).id
+
+    get_as @alice, "/api/v1/users/#{@alice.id}/upvoted/comments"
+    assert_includes json.map { |comment| comment["id"] }, comments(:second).id
+
+    delete "/api/v1/submissions/#{submissions(:url_low).id}/hidden", headers: auth(@alice)
+    delete "/api/v1/submissions/#{submissions(:url_low).id}/votes", headers: auth(@alice)
+    delete "/api/v1/comments/#{comments(:second).id}/votes", headers: auth(@alice)
+
+    get_as @alice, "/api/v1/users/#{@alice.id}/hidden"
+    assert_empty json
+
+    get_as @alice, "/api/v1/users/#{@alice.id}/upvoted/submissions"
+    assert_empty json
+
+    get_as @alice, "/api/v1/users/#{@alice.id}/upvoted/comments"
+    assert_empty json
+  end
+
   test "a user without submissions, comments or favorites gets empty lists" do
     lonely = User.create!(username: "lonely", provider: "github", uid: "99")
     %w[submissions comments favorites/submissions favorites/comments].each do |list|
@@ -134,10 +209,23 @@ class Api::V1::UsersTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "an owner without hidden or upvoted items gets empty lists" do
+    lonely = User.create!(username: "lonely", provider: "github", uid: "100")
+    %w[hidden upvoted/submissions upvoted/comments].each do |list|
+      get_as lonely, "/api/v1/users/#{lonely.id}/#{list}"
+
+      assert_response :ok
+      assert_equal [], json, list
+    end
+  end
+
   # --- errors ---------------------------------------------------------------------------
 
   test "an unknown user is 404 in every endpoint" do
-    [ "", "/submissions", "/comments", "/favorites/submissions", "/favorites/comments" ].each do |suffix|
+    [
+      "", "/submissions", "/comments", "/favorites/submissions", "/favorites/comments",
+      "/hidden", "/upvoted/submissions", "/upvoted/comments"
+    ].each do |suffix|
       get_as @alice, "/api/v1/users/0#{suffix}"
 
       assert_response :not_found, suffix
@@ -157,7 +245,10 @@ class Api::V1::UsersTest < ActionDispatch::IntegrationTest
   end
 
   test "requires an api-key" do
-    [ "", "/submissions", "/comments", "/favorites/submissions", "/favorites/comments" ].each do |suffix|
+    [
+      "", "/submissions", "/comments", "/favorites/submissions", "/favorites/comments",
+      "/hidden", "/upvoted/submissions", "/upvoted/comments"
+    ].each do |suffix|
       [ nil, "wrong" ].each do |key|
         get "/api/v1/users/#{@alice.id}#{suffix}", headers: { "X-API-KEY" => key }.compact
 
@@ -167,10 +258,23 @@ class Api::V1::UsersTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "a different api-key cannot access hidden or upvoted lists" do
+    %w[hidden upvoted/submissions upvoted/comments].each do |list|
+      get_as @bob, "/api/v1/users/#{@alice.id}/#{list}"
+
+      assert_response :forbidden, list
+      assert_equal "forbidden", json["error"], list
+    end
+  end
+
   private
 
+  def auth(user)
+    { "X-API-KEY" => user.api_key }
+  end
+
   def get_as(user, path)
-    get path, headers: { "X-API-KEY" => user.api_key }
+    get path, headers: auth(user)
   end
 
   def json
