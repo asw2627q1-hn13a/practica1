@@ -88,6 +88,67 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+    post:
+      tags: [submissions]
+      operationId: createSubmission
+      summary: Crea una submission.
+      description: |
+        Crea una submission de l'usuari de l'api-key (el creador no es llegeix
+        mai del cos). Només es llegeixen `title`, `url` i `text`; qualsevol
+        altre camp s'ignora. Amb `url` és de tipus `url`; sense (absent, buida,
+        només amb espais o `null`) és de tipus `ask` amb `url` a `null`. Es
+        comprova primer el format (422) i després si la `url` ja existeix
+        (409): en tots dos casos no es crea res.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmissionCreate"
+            examples:
+              url:
+                summary: Submission de tipus url
+                value:
+                  title: "Show HN: My project"
+                  url: "https://github.com/foo/bar"
+              ask:
+                summary: Submission de tipus ask (sense url)
+                value:
+                  title: "Ask HN: How do you learn Rails?"
+                  text: "Any good resources?"
+      responses:
+        "201":
+          description: Submission creada (sense `comments`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+        "400":
+          description: El cos no és JSON vàlid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: |
+            La `url` ja és d'una altra submission; no es crea res.
+            `details.existing_submission_id` és l'id de la que ja la té.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "`title` absent o buit, o `url` amb format invàlid; `details` té els errors per camp."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /api/v1/submissions/{id}:
     get:
@@ -940,7 +1001,7 @@ components:
       description: |
         Cos del PUT d'una submission. Tots els camps són opcionals i només
         canvien els enviats; qualsevol altre camp s'ignora. No serveix per
-        crear-la (POST): allà el `title` és obligatori.
+        crear-la (POST): allà el `title` és obligatori (vegeu SubmissionCreate).
       properties:
         title:
           type: string
@@ -954,6 +1015,29 @@ components:
         text:
           type: string
           nullable: true
+
+    SubmissionCreate:
+      type: object
+      description: |
+        Cos del POST d'una submission. Només `title` és obligatori; qualsevol
+        camp que no sigui `title`, `url` o `text` s'ignora.
+      required: [title]
+      properties:
+        title:
+          type: string
+          description: No pot ser buit ni només espais.
+          example: "Show HN: My project"
+        url:
+          type: string
+          nullable: true
+          description: |
+            Url http(s). Absent, buida o `null`, la submission és de tipus
+            `ask`. Si ja és d'una altra submission, 409.
+          example: "https://github.com/foo/bar"
+        text:
+          type: string
+          nullable: true
+          description: Opcional.
 
     Comment:
       type: object
