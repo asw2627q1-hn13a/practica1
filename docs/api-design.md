@@ -111,6 +111,16 @@ supera els 100 nivells niats i alguns clients han d'apujar el seu límit per lle
 - `GET /comments/{id}` retorna el comment amb el seu **subarbre** a `replies`.
 - Esborrar un comment esborra les seves respostes (igual que la web).
 
+**`PUT /comments/{id}`** — només l'autor. Cos `{ "body": "..." }`: només es pot canviar el text i qualsevol altre
+camp s'ignora; sense `body` (p. ex. `{}`) respon 200 sense canvis. Si `body` és `null`, buit o només té espais:
+**422** amb `details.body`. Retorna el comment actualitzat, pla (sense `replies` ni `submission`).
+
+**`DELETE /comments/{id}`** — només l'autor. Esborra el comment amb totes les seves respostes, a qualsevol
+profunditat, i els vots i favorits que en depenen (igual que la web). 204 sense cos. Les respostes s'esborren
+dels nivells més profunds cap amunt, de manera que una conversa molt llarga no fa petar el servidor.
+
+A `PUT` i `DELETE` l'id es llegeix de la ruta: un JSON mal format respon 400 només després del 404 i del 403.
+
 ### 2.3 Votes
 
 El vot és un recurs que penja de l'element votat i del qual n'hi ha com a màxim un per usuari.
