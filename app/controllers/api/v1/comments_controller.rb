@@ -40,6 +40,19 @@ module Api
         render json: CommentSerializer.new(comment)
       end
 
+      # DELETE /api/v1/comments/:id
+      #
+      # Only the author. Deletes it with all its replies at any depth, and the
+      # votes and favorites that hang from them, like the web. 204 without
+      # body. The request body is not read.
+      def destroy
+        comment = find_comment
+        authorize_owner!(comment)
+        comment.destroy!
+
+        head :no_content
+      end
+
       private
 
       # Only the text: the author comes from the api-key and the submission from
