@@ -200,7 +200,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SubmissionInput"
+              $ref: "#/components/schemas/SubmissionUpdate"
       responses:
         "200":
           description: Submission actualitzada (sense `comments`).
@@ -538,11 +538,12 @@ components:
               items:
                 $ref: "#/components/schemas/Comment"
 
-    SubmissionInput:
+    SubmissionUpdate:
       type: object
       description: |
-        Camps editables d'una submission. Qualsevol altre camp s'ignora. En
-        editar-la (PUT) tots són opcionals i només canvien els enviats.
+        Cos del PUT d'una submission. Tots els camps són opcionals i només
+        canvien els enviats; qualsevol altre camp s'ignora. No serveix per
+        crear-la (POST): allà el `title` és obligatori.
       properties:
         title:
           type: string
