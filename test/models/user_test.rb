@@ -69,4 +69,31 @@ class UserTest < ActiveSupport::TestCase
       b.update_columns(api_key: a.api_key)
     end
   end
+
+  # API-15 / USR-04: web and API store an unfilled about or email the same way.
+  test "a blank about or email (empty or only spaces) is stored as nil" do
+    user = users(:alice)
+    [ "", "   " ].each do |blank|
+      user.update!(about: blank, email: blank)
+
+      assert_nil user.reload.about
+      assert_nil user.email
+    end
+  end
+
+  test "about and email are stored without surrounding spaces" do
+    user = users(:alice)
+    user.update!(about: "  Hi, I am Alice  ", email: " alice@new.example.com ")
+
+    assert_equal "Hi, I am Alice", user.reload.about
+    assert_equal "alice@new.example.com", user.email
+  end
+
+  test "nil about and email stay nil" do
+    user = users(:alice)
+    user.update!(about: nil, email: nil)
+
+    assert_nil user.reload.about
+    assert_nil user.email
+  end
 end

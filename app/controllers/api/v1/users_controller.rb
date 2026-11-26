@@ -2,10 +2,11 @@ module Api
   module V1
     # API-10: threads of a user.
     # API-14: profile of any user and their submissions, comments and favorites.
-    # The other user actions (API-15..17) will be added here by their stories.
+    # API-15: edit your own profile.
+    # The other user actions (API-16, API-17) will be added here by their stories.
     #
-    # All of them are public, like the profile on the web: any valid api-key can
-    # see any user. An unknown user is 404 and an empty list is 200 [].
+    # The reading actions are public, like the profile on the web: any valid
+    # api-key can see any user. An unknown user is 404 and an empty list is 200 [].
     class UsersController < BaseController
       # GET /api/v1/users/:id
       #
@@ -13,6 +14,21 @@ module Api
       # user's own profile; the api-key never.
       def show
         render json: UserSerializer.new(find_user, viewer: current_user, base_url: request.base_url)
+      end
+
+      # PUT /api/v1/users/:id  { "about": "...", "email": "..." }
+      #
+      # Only your own profile (403 otherwise, checked before reading the body).
+      # Partial update: only the fields sent change and any other field
+      # (username, api_key...) is ignored. The model strips the values and stores
+      # a blank one as null. An invalid email is 422. 200 with the updated
+      # profile, email included.
+      def update
+        user = find_user
+        authorize_owner!(user)
+        user.update!(user_params)
+
+        render json: UserSerializer.new(user, viewer: current_user, base_url: request.base_url)
       end
 
       # GET /api/v1/users/:id/submissions — newest first, like /submissions?id=
@@ -91,6 +107,12 @@ module Api
       # (docs/api-design.md §1: 401 -> 404 -> 403 -> 400).
       def find_user
         User.find(request.path_parameters[:id])
+      end
+
+      # The editable fields of the profile; the rest of the body is ignored. The
+      # User model strips them and stores a blank one as nil (`normalizes`).
+      def user_params
+        params.permit(:about, :email)
       end
 
       # The items of `type` ("Submission" or "Comment") that `user` has marked

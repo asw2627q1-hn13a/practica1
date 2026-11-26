@@ -1055,6 +1055,104 @@ paths:
               example:
                 error: "not_found"
                 message: "User with id=999 not found"
+    put:
+      tags: [users]
+      operationId: updateUser
+      summary: Edita el perfil propi.
+      description: |
+        Només el propi perfil (l'usuari de l'api-key). Actualització parcial:
+        només canvien els camps enviats (`about`, `email`) i qualsevol altre
+        camp (`username`, `api_key`...) s'ignora. Es treuen els espais dels
+        extrems, i un valor buit, només amb espais o `null` es desa com a
+        `null` (igual que des de la web). Un cos sense cap camp editable respon
+        200 sense canvis. Retorna el perfil actualitzat, amb `email`.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari (ha de ser el de l'api-key).
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Tots els camps són opcionals; qualsevol altre camp s'ignora.
+              properties:
+                about:
+                  type: string
+                  nullable: true
+                  example: "Rails developer from Barcelona"
+                email:
+                  type: string
+                  format: email
+                  nullable: true
+                  example: alice@example.com
+      responses:
+        "200":
+          description: Perfil actualitzat (inclou `email`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+              example:
+                id: 2
+                username: alice
+                about: "Rails developer from Barcelona"
+                karma: 25
+                avatar_url: "https://practica1-65h7.onrender.com/assets/default_avatar-7b942fc4.png"
+                banner_url: "https://practica1-65h7.onrender.com/assets/default_banner-1a2b3c4d.png"
+                created_at: "2026-11-01T09:00:00Z"
+                email: alice@example.com
+        "400":
+          description: El cos no és JSON vàlid (només es comprova en el perfil propi).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "bad_request"
+                message: "Request body is not valid JSON"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
+        "403":
+          description: El perfil és d'un altre usuari; no es canvia res.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "forbidden"
+                message: "You can only modify your own profile"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
+        "422":
+          description: "`email` amb format invàlid (un cop trets els espais dels extrems); `details` té l'error; no es canvia res."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unprocessable_entity"
+                message: "Validation failed"
+                details:
+                  email: ["is invalid"]
 
   /api/v1/users/{id}/submissions:
     get:
