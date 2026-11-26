@@ -1154,6 +1154,148 @@ paths:
                 details:
                   email: ["is invalid"]
 
+  # API-16: imatges del perfil (avatar i banner). L'únic endpoint de l'API que
+  # usa multipart/form-data, perquè es pugui provar des de l'editor de Swagger.
+  /api/v1/users/{id}/images:
+    put:
+      tags: [users]
+      operationId: uploadUserImages
+      summary: Puja un avatar nou, un banner nou o tots dos.
+      description: |
+        Només el propietari del perfil (l'`{id}` ha de ser l'usuari de
+        l'api-key). La petició és `multipart/form-data` amb les parts `avatar`
+        i/o `banner` (fitxers); n'hi ha d'haver almenys una. Cada fitxer ha de
+        ser una imatge PNG, JPEG, GIF o WebP (es comprova pel contingut, no pel
+        nom) de com a màxim 5 MB. Les imatges noves es desen a l'object storage
+        extern i substitueixen les anteriors; l'altra imatge, si no s'envia, es
+        manté. Si un dels fitxers no és vàlid no es desa cap dels dos.
+        Retorna el perfil amb les noves `avatar_url` i `banner_url`.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari (el de l'api-key).
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+                  description: Avatar nou (PNG, JPEG, GIF o WebP, màxim 5 MB).
+                banner:
+                  type: string
+                  format: binary
+                  description: Banner nou (PNG, JPEG, GIF o WebP, màxim 5 MB).
+      responses:
+        "200":
+          description: Perfil actualitzat (amb `email`, que és el perfil propi).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+              example:
+                id: 2
+                username: alice
+                about: null
+                karma: 25
+                avatar_url: "https://practica1-65h7.onrender.com/rails/active_storage/blobs/redirect/eyJfcmFpbHMi.../avatar.png"
+                banner_url: "https://practica1-65h7.onrender.com/rails/active_storage/blobs/redirect/eyJfcmFpbHMi.../default_banner.png"
+                created_at: "2026-11-01T09:00:00Z"
+                email: alice@example.com
+        "400":
+          description: No s'ha enviat cap de les parts `avatar` ni `banner`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: L'usuari és un altre que el de l'api-key; no es canvia res.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: |
+            Una part no és un fitxer, o el fitxer no és una imatge PNG, JPEG,
+            GIF o WebP, o pesa més de 5 MB. `details` té l'error per camp
+            (`avatar` i/o `banner`) i no es desa cap imatge.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unprocessable_entity"
+                message: "Validation failed"
+                details:
+                  avatar: ["must be a PNG, JPEG, GIF or WebP image"]
+
+  /api/v1/users/{id}/images/{kind}:
+    delete:
+      tags: [users]
+      operationId: resetUserImage
+      summary: Torna l'avatar o el banner a la imatge per defecte.
+      description: |
+        Només el propietari del perfil. Esborra la imatge pujada i en torna a
+        assignar la per defecte, com la casella "delete" de la web. Si ja era la
+        per defecte, respon 200 igualment. Retorna el perfil actualitzat.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari (el de l'api-key).
+          schema:
+            type: integer
+        - name: kind
+          in: path
+          required: true
+          description: Quina imatge es reinicia.
+          schema:
+            type: string
+            enum: [avatar, banner]
+      responses:
+        "200":
+          description: Perfil actualitzat, amb la imatge per defecte.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: L'usuari és un altre que el de l'api-key; no es canvia res.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: L'usuari no existeix o `kind` no és `avatar` ni `banner`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /api/v1/users/{id}/submissions:
     get:
       tags: [users]
