@@ -55,13 +55,19 @@ module Api
       #
       # Only the owner. Partial update: only the fields sent change and any
       # other field is ignored. Same rules as creating one: a blank title or an
-      # invalid url is 422 and the type follows the url ("url" with one, "ask"
-      # without). 200 with the updated submission.
+      # invalid url is 422, the type follows the url ("url" with one, "ask"
+      # without) and a url that another submission already has is 409 (the
+      # validations go first). 200 with the updated submission.
       def update
         submission = find_submission
         authorize_owner!(submission)
         submission.assign_attributes(submission_params)
         submission.assign_type_from_url
+        submission.validate!
+
+        existing = submission_with_same_url(submission)
+        return render_url_taken(existing) if existing
+
         submission.save!
 
         render json: SubmissionSerializer.new(submission)
@@ -83,6 +89,21 @@ module Api
         attrs = params.permit(:title, :url, :text)
         attrs[:url] = attrs[:url].presence if attrs.key?(:url)
         attrs
+      end
+
+      # SUB-04 in the API: another submission that already has this url, or nil.
+      # Only when the url changes, so the title of an old duplicate can still be
+      # edited. (A new submission has no id: then it looks at all of them.)
+      def submission_with_same_url(submission)
+        return unless submission.url_changed? && submission.url.present?
+
+        Submission.where(url: submission.url).where.not(id: submission.id).first
+      end
+
+      # 409 with the id of the submission that already has the url.
+      def render_url_taken(existing)
+        render_error(409, "This URL has already been submitted",
+                     details: { existing_submission_id: existing.id })
       end
 
       def list_scope(list)

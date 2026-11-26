@@ -131,6 +131,52 @@ class Api::V1::SubmissionsUpdateTest < ActionDispatch::IntegrationTest
     assert_equal "bad_request", json["error"]
   end
 
+  # --- url already submitted (409) ----------------------------------------------
+
+  test "a url that another submission already has is 409 and nothing changes" do
+    taken = submissions(:url_low) # bob's
+    assert_no_changes -> { @submission.reload.attributes } do
+      put_json @submission, { url: taken.url, title: "Not saved" }
+    end
+
+    assert_response :conflict
+    assert_equal({
+      "error" => "conflict",
+      "message" => "This URL has already been submitted",
+      "details" => { "existing_submission_id" => taken.id }
+    }, json)
+  end
+
+  test "it is also 409 if the other submission is of the same user" do
+    put_json @ask, { url: @submission.url } # both are alice's
+
+    assert_response :conflict
+    assert_equal @submission.id, json["details"]["existing_submission_id"]
+    assert_nil @ask.reload.url
+  end
+
+  test "sending its own url again is not a conflict" do
+    put_json @submission, { url: @submission.url, title: "Same url" }
+
+    assert_response :ok
+    assert_equal "Same url", @submission.reload.title
+  end
+
+  test "an old duplicate can still change its title" do
+    old_duplicate = submissions(:url_low)
+    old_duplicate.update_columns(url: @submission.url)
+    put_json old_duplicate, { title: "Edited" }, user: @bob
+
+    assert_response :ok
+    assert_equal "Edited", old_duplicate.reload.title
+  end
+
+  test "a blank title with a url already submitted is 422, not 409" do
+    put_json @ask, { title: "", url: @submission.url }
+
+    assert_validation_error "title" => [ "can't be blank" ]
+  end
+
   # --- who can edit it -------------------------------------------------------------
 
   test "another user's api-key is 403 and nothing changes" do
