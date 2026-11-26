@@ -108,7 +108,10 @@ supera els 100 nivells niats i alguns clients han d'apujar el seu límit per lle
 - Cos de creació i edició: `{ "body": "..." }`. Una resposta (`replies`) hereta la submission del comment pare.
 - En crear un comment o una resposta, si `body` no hi és, és `null`, buit o només té espais: **422** amb `details.body` (no 400).
 - `GET /comments` retorna els comments de tots els usuaris, del més recent al més antic, **plans** (sense arbre).
-- `GET /comments/{id}` retorna el comment amb el seu **subarbre** a `replies`.
+- `GET /comments/{id}` retorna el comment amb el seu **subarbre complet** a `replies` (només els seus descendents, a
+  qualsevol profunditat, del més antic al més recent a tots els nivells; amb la mateixa data, primer l'id més petit).
+  El comment arrel afegeix `submission` (`{ "id", "title" }`); el pare és `parent_id` (`null` en un comment directe).
+  Com a `GET /submissions/{id}`, a partir de 50 nivells de respostes el JSON supera els 100 nivells niats.
 - Esborrar un comment esborra les seves respostes (igual que la web).
 
 **`PUT /comments/{id}`** — només l'autor. Cos `{ "body": "..." }`: només es pot canviar el text i qualsevol altre
@@ -220,7 +223,7 @@ El POST retorna `{ "hidden": true }`; el DELETE retorna 204 (a diferència de `.
 ```
 - `parent_id` és `null` en un comment directe a la submission, i l'id del comment pare en una resposta (és el que fa possible l'enllaç *parent*, COM-05).
 - A l'arbre (`GET /submissions/{id}`, `GET /comments/{id}`) cada comment afegeix `"replies": [ ... ]` en ordre cronològic (buit si no n'hi ha). També a `GET /users/{id}/threads`, però allà només amb les respostes directes.
-- Als llistats plans (`GET /comments`, `/users/{id}/comments`, favorites, upvoted) i a `GET /users/{id}/threads` afegeix `"submission": { "id": 7, "title": "..." }`.
+- Als llistats plans (`GET /comments`, `/users/{id}/comments`, favorites, upvoted), a `GET /users/{id}/threads` i al comment arrel de `GET /comments/{id}` afegeix `"submission": { "id": 7, "title": "..." }`.
 
 ### User
 ```json
