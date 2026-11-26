@@ -130,6 +130,67 @@ paths:
               example:
                 error: "unauthorized"
                 message: "API key is missing or invalid"
+    post:
+      tags: [submissions]
+      operationId: createSubmission
+      summary: Crea una submission.
+      description: |
+        Crea una submission de l'usuari de l'api-key (el creador no es llegeix
+        mai del cos). Només es llegeixen `title`, `url` i `text`; qualsevol
+        altre camp s'ignora. Amb `url` és de tipus `url`; sense (absent, buida,
+        només amb espais o `null`) és de tipus `ask` amb `url` a `null`. Es
+        comprova primer el format (422) i després si la `url` ja existeix
+        (409): en tots dos casos no es crea res.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmissionCreate"
+            examples:
+              url:
+                summary: Submission de tipus url
+                value:
+                  title: "Show HN: My project"
+                  url: "https://github.com/foo/bar"
+              ask:
+                summary: Submission de tipus ask (sense url)
+                value:
+                  title: "Ask HN: How do you learn Rails?"
+                  text: "Any good resources?"
+      responses:
+        "201":
+          description: Submission creada (sense `comments`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+        "400":
+          description: El cos no és JSON vàlid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: |
+            La `url` ja és d'una altra submission; no es crea res.
+            `details.existing_submission_id` és l'id de la que ja la té.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "`title` absent o buit, o `url` amb format invàlid; `details` té els errors per camp."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /api/v1/submissions/{id}:
     get:
@@ -827,6 +888,80 @@ paths:
                     error: "not_found"
                     message: "This submission is not in your favorites"
 
+  # API-13: amagar és propi de cada usuari i només afecta els llistats.
+  /api/v1/submissions/{submissionId}/hidden:
+    post:
+      tags: [hidden]
+      operationId: hideSubmission
+      summary: Amaga una submission dels llistats propis.
+      description: |
+        Amaga la submission per a l'usuari de l'api-key. No afecta els llistats
+        d'altres usuaris ni la consulta individual de la submission.
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          description: Id de la submission.
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Submission amagada.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [hidden]
+                properties:
+                  hidden:
+                    type: boolean
+                    example: true
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: La submission no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: La submission ja estava amagada per l'usuari.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [hidden]
+      operationId: unhideSubmission
+      summary: Torna a mostrar una submission als llistats propis.
+      description: Respon 204 sense cos.
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          description: Id de la submission.
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Submission tornada a mostrar.
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: La submission no existeix o no estava amagada per l'usuari.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /api/v1/comments/{commentId}/favorites:
     post:
       tags: [favorites]
@@ -1126,6 +1261,734 @@ paths:
                 error: "not_found"
                 message: "User with id=999 not found"
 
+  # API-14: perfil de qualsevol usuari i la seva activitat. Tot és públic (com el
+  # perfil de la web): qualsevol api-key vàlida pot consultar qualsevol usuari.
+  /api/v1/users/{id}:
+    get:
+      tags: [users]
+      operationId: getUser
+      summary: Obté el perfil d'un usuari.
+      description: |
+        Retorna el perfil de qualsevol usuari. `avatar_url` i `banner_url` són
+        URL absolutes: la imatge pujada o, si no n'hi ha, la imatge per defecte.
+        L'`email` només s'inclou quan l'usuari és el de l'api-key; l'api-key no
+        s'inclou mai.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: El perfil de l'usuari.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+              examples:
+                unAltreUsuari:
+                  summary: Perfil d'un altre usuari (sense email)
+                  value:
+                    id: 3
+                    username: bob
+                    about: "Rails developer"
+                    karma: 42
+                    avatar_url: "https://practica1-65h7.onrender.com/rails/active_storage/blobs/redirect/eyJfcmFpbHMi.../avatar.png"
+                    banner_url: "https://practica1-65h7.onrender.com/assets/default_banner-1a2b3c4d.png"
+                    created_at: "2026-11-01T09:00:00Z"
+                elPropi:
+                  summary: El perfil propi (amb email)
+                  value:
+                    id: 2
+                    username: alice
+                    about: null
+                    karma: 25
+                    avatar_url: "https://practica1-65h7.onrender.com/assets/default_avatar-7b942fc4.png"
+                    banner_url: "https://practica1-65h7.onrender.com/assets/default_banner-1a2b3c4d.png"
+                    created_at: "2026-11-01T09:00:00Z"
+                    email: alice@example.com
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
+    put:
+      tags: [users]
+      operationId: updateUser
+      summary: Edita el perfil propi.
+      description: |
+        Només el propi perfil (l'usuari de l'api-key). Actualització parcial:
+        només canvien els camps enviats (`about`, `email`) i qualsevol altre
+        camp (`username`, `api_key`...) s'ignora. Es treuen els espais dels
+        extrems, i un valor buit, només amb espais o `null` es desa com a
+        `null` (igual que des de la web). Un cos sense cap camp editable respon
+        200 sense canvis. Retorna el perfil actualitzat, amb `email`.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari (ha de ser el de l'api-key).
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Tots els camps són opcionals; qualsevol altre camp s'ignora.
+              properties:
+                about:
+                  type: string
+                  nullable: true
+                  example: "Rails developer from Barcelona"
+                email:
+                  type: string
+                  format: email
+                  nullable: true
+                  example: alice@example.com
+      responses:
+        "200":
+          description: Perfil actualitzat (inclou `email`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+              example:
+                id: 2
+                username: alice
+                about: "Rails developer from Barcelona"
+                karma: 25
+                avatar_url: "https://practica1-65h7.onrender.com/assets/default_avatar-7b942fc4.png"
+                banner_url: "https://practica1-65h7.onrender.com/assets/default_banner-1a2b3c4d.png"
+                created_at: "2026-11-01T09:00:00Z"
+                email: alice@example.com
+        "400":
+          description: El cos no és JSON vàlid (només es comprova en el perfil propi).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "bad_request"
+                message: "Request body is not valid JSON"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
+        "403":
+          description: El perfil és d'un altre usuari; no es canvia res.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "forbidden"
+                message: "You can only modify your own profile"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
+        "422":
+          description: "`email` amb format invàlid (un cop trets els espais dels extrems); `details` té l'error; no es canvia res."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unprocessable_entity"
+                message: "Validation failed"
+                details:
+                  email: ["is invalid"]
+
+  # API-16: imatges del perfil (avatar i banner). L'únic endpoint de l'API que
+  # usa multipart/form-data, perquè es pugui provar des de l'editor de Swagger.
+  /api/v1/users/{id}/images:
+    put:
+      tags: [users]
+      operationId: uploadUserImages
+      summary: Puja un avatar nou, un banner nou o tots dos.
+      description: |
+        Només el propietari del perfil (l'`{id}` ha de ser l'usuari de
+        l'api-key). La petició és `multipart/form-data` amb les parts `avatar`
+        i/o `banner` (fitxers); n'hi ha d'haver almenys una. Cada fitxer ha de
+        ser una imatge PNG, JPEG, GIF o WebP (es comprova pel contingut, no pel
+        nom) de com a màxim 5 MB. Les imatges noves es desen a l'object storage
+        extern i substitueixen les anteriors; l'altra imatge, si no s'envia, es
+        manté. Si un dels fitxers no és vàlid no es desa cap dels dos.
+        Retorna el perfil amb les noves `avatar_url` i `banner_url`.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari (el de l'api-key).
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+                  description: Avatar nou (PNG, JPEG, GIF o WebP, màxim 5 MB).
+                banner:
+                  type: string
+                  format: binary
+                  description: Banner nou (PNG, JPEG, GIF o WebP, màxim 5 MB).
+      responses:
+        "200":
+          description: Perfil actualitzat (amb `email`, que és el perfil propi).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+              example:
+                id: 2
+                username: alice
+                about: null
+                karma: 25
+                avatar_url: "https://practica1-65h7.onrender.com/rails/active_storage/blobs/redirect/eyJfcmFpbHMi.../avatar.png"
+                banner_url: "https://practica1-65h7.onrender.com/rails/active_storage/blobs/redirect/eyJfcmFpbHMi.../default_banner.png"
+                created_at: "2026-11-01T09:00:00Z"
+                email: alice@example.com
+        "400":
+          description: No s'ha enviat cap de les parts `avatar` ni `banner`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: L'usuari és un altre que el de l'api-key; no es canvia res.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: |
+            Una part no és un fitxer, o el fitxer no és una imatge PNG, JPEG,
+            GIF o WebP, o pesa més de 5 MB. `details` té l'error per camp
+            (`avatar` i/o `banner`) i no es desa cap imatge.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unprocessable_entity"
+                message: "Validation failed"
+                details:
+                  avatar: ["must be a PNG, JPEG, GIF or WebP image"]
+
+  /api/v1/users/{id}/images/{kind}:
+    delete:
+      tags: [users]
+      operationId: resetUserImage
+      summary: Torna l'avatar o el banner a la imatge per defecte.
+      description: |
+        Només el propietari del perfil. Esborra la imatge pujada i en torna a
+        assignar la per defecte, com la casella "delete" de la web. Si ja era la
+        per defecte, respon 200 igualment. Retorna el perfil actualitzat.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari (el de l'api-key).
+          schema:
+            type: integer
+        - name: kind
+          in: path
+          required: true
+          description: Quina imatge es reinicia.
+          schema:
+            type: string
+            enum: [avatar, banner]
+      responses:
+        "200":
+          description: Perfil actualitzat, amb la imatge per defecte.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: L'usuari és un altre que el de l'api-key; no es canvia res.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: L'usuari no existeix o `kind` no és `avatar` ni `banner`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/users/{id}/submissions:
+    get:
+      tags: [users]
+      operationId: listUserSubmissions
+      summary: Submissions d'un usuari.
+      description: |
+        Les submissions creades per l'usuari, de la més recent a la més antiga.
+        No s'exclouen les que l'usuari de l'api-key ha amagat (amagar només
+        afecta els llistats generals de `GET /api/v1/submissions`). Si no en té
+        cap, retorna un array buit amb 200.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Submissions de l'usuari (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Submission"
+              example:
+                - id: 7
+                  title: "Show HN: My project"
+                  url: "https://github.com/foo/bar"
+                  domain: github.com
+                  text: null
+                  submission_type: url
+                  points: 12
+                  comments_count: 3
+                  user:
+                    id: 2
+                    username: alice
+                  created_at: "2026-11-20T10:00:00Z"
+                  updated_at: "2026-11-20T10:00:00Z"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
+
+  /api/v1/users/{id}/comments:
+    get:
+      tags: [users]
+      operationId: listUserComments
+      summary: Comments d'un usuari.
+      description: |
+        Els comments escrits per l'usuari (directes i respostes), del més recent
+        al més antic, en llista plana; cada un amb la submission a la qual
+        pertany (`submission`). Si no en té cap, retorna un array buit amb 200.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Comments de l'usuari (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+              example:
+                - id: 22
+                  body: Thanks!
+                  points: 1
+                  user:
+                    id: 2
+                    username: alice
+                  submission_id: 7
+                  parent_id: 21
+                  created_at: "2026-11-20T11:30:00Z"
+                  updated_at: "2026-11-20T11:30:00Z"
+                  submission:
+                    id: 7
+                    title: "Show HN: My project"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
+
+  /api/v1/users/{id}/favorites/submissions:
+    get:
+      tags: [users, favorites]
+      operationId: listUserFavoriteSubmissions
+      summary: Submissions favorites d'un usuari.
+      description: |
+        Les submissions que l'usuari ha marcat com a favorites, de la marcada
+        més recentment a la més antiga (per la data del favorit, no de la
+        submission). Si no en té cap, retorna un array buit amb 200.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Submissions favorites de l'usuari (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Submission"
+              example:
+                - id: 5
+                  title: "A beginner's guide to object storage"
+                  url: "https://docs.example.com/object-storage"
+                  domain: docs.example.com
+                  text: null
+                  submission_type: url
+                  points: 9
+                  comments_count: 0
+                  user:
+                    id: 3
+                    username: bob
+                  created_at: "2026-11-19T08:30:00Z"
+                  updated_at: "2026-11-19T08:30:00Z"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
+
+  /api/v1/users/{id}/favorites/comments:
+    get:
+      tags: [users, favorites]
+      operationId: listUserFavoriteComments
+      summary: Comments favorits d'un usuari.
+      description: |
+        Els comments que l'usuari ha marcat com a favorits, del marcat més
+        recentment al més antic (per la data del favorit), en llista plana i
+        cada un amb la seva `submission`. Si no en té cap, retorna un array buit
+        amb 200.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Comments favorits de l'usuari (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+              example:
+                - id: 21
+                  body: Great post
+                  points: 2
+                  user:
+                    id: 3
+                    username: bob
+                  submission_id: 7
+                  parent_id: null
+                  created_at: "2026-11-20T11:00:00Z"
+                  updated_at: "2026-11-20T11:00:00Z"
+                  submission:
+                    id: 7
+                    title: "Show HN: My project"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
+
+  /api/v1/users/{id}/hidden:
+    get:
+      tags: [users]
+      operationId: listUserHidden
+      summary: Submissions amagades de l'usuari de l'api-key.
+      description: |
+        Llistat privat de submissions amagades per l'usuari. `{id}` ha de ser
+        l'usuari de l'api-key; altrament respon 403. Ordenat per la data en què
+        s'ha amagat cada submission, de més recent a més antiga. Unhide
+        (`DELETE /api/v1/submissions/{submission_id}/hidden`) la treu del
+        llistat.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari de l'api-key.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Submissions amagades (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Submission"
+              example:
+                - id: 7
+                  title: "Show HN: My project"
+                  url: "https://github.com/foo/bar"
+                  domain: github.com
+                  text: null
+                  submission_type: url
+                  points: 12
+                  comments_count: 3
+                  user:
+                    id: 2
+                    username: alice
+                  created_at: "2026-11-20T10:00:00Z"
+                  updated_at: "2026-11-20T10:00:00Z"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: L'usuari de la ruta no és el de l'api-key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "forbidden"
+                message: "You can only see your own hidden submissions"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/users/{id}/upvoted/submissions:
+    get:
+      tags: [users]
+      operationId: listUserUpvotedSubmissions
+      summary: Submissions votades per l'usuari de l'api-key.
+      description: |
+        Llistat privat de submissions votades per l'usuari. `{id}` ha de ser
+        l'usuari de l'api-key; altrament respon 403. Ordenat per la data del vot,
+        de més recent a més antic. Unvote (`DELETE
+        /api/v1/submissions/{submission_id}/votes`) treu l'element del llistat.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari de l'api-key.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Submissions votades (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Submission"
+              example:
+                - id: 7
+                  title: "Show HN: My project"
+                  url: "https://github.com/foo/bar"
+                  domain: github.com
+                  text: null
+                  submission_type: url
+                  points: 12
+                  comments_count: 3
+                  user:
+                    id: 2
+                    username: alice
+                  created_at: "2026-11-20T10:00:00Z"
+                  updated_at: "2026-11-20T10:00:00Z"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: L'usuari de la ruta no és el de l'api-key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "forbidden"
+                message: "You can only see your own upvoted submissions"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/users/{id}/upvoted/comments:
+    get:
+      tags: [users]
+      operationId: listUserUpvotedComments
+      summary: Comments votats per l'usuari de l'api-key.
+      description: |
+        Llistat privat de comments votats per l'usuari, amb la seva submission.
+        `{id}` ha de ser l'usuari de l'api-key; altrament respon 403. Ordenat
+        per la data del vot, de més recent a més antic. Unvote (`DELETE
+        /api/v1/comments/{comment_id}/votes`) treu l'element del llistat.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari de l'api-key.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Comments votats (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+              example:
+                - id: 22
+                  body: Thanks!
+                  points: 1
+                  user:
+                    id: 2
+                    username: alice
+                  submission_id: 7
+                  parent_id: 21
+                  created_at: "2026-11-20T11:30:00Z"
+                  updated_at: "2026-11-20T11:30:00Z"
+                  submission:
+                    id: 7
+                    title: "Show HN: My project"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: L'usuari de la ruta no és el de l'api-key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "forbidden"
+                message: "You can only see your own upvoted comments"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   securitySchemes:
     apiKey:
@@ -1215,7 +2078,7 @@ components:
       description: |
         Cos del PUT d'una submission. Tots els camps són opcionals i només
         canvien els enviats; qualsevol altre camp s'ignora. No serveix per
-        crear-la (POST): allà el `title` és obligatori.
+        crear-la (POST): allà el `title` és obligatori (vegeu SubmissionCreate).
       properties:
         title:
           type: string
@@ -1229,6 +2092,29 @@ components:
         text:
           type: string
           nullable: true
+
+    SubmissionCreate:
+      type: object
+      description: |
+        Cos del POST d'una submission. Només `title` és obligatori; qualsevol
+        camp que no sigui `title`, `url` o `text` s'ignora.
+      required: [title]
+      properties:
+        title:
+          type: string
+          description: No pot ser buit ni només espais.
+          example: "Show HN: My project"
+        url:
+          type: string
+          nullable: true
+          description: |
+            Url http(s). Absent, buida o `null`, la submission és de tipus
+            `ask`. Si ja és d'una altra submission, 409.
+          example: "https://github.com/foo/bar"
+        text:
+          type: string
+          nullable: true
+          description: Opcional.
 
     Comment:
       type: object
