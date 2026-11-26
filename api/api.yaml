@@ -177,6 +177,110 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+    put:
+      tags: [submissions]
+      operationId: updateSubmission
+      summary: Edita una submission pròpia.
+      description: |
+        Només el propietari. Actualització parcial: només canvien els camps
+        enviats (`title`, `url`, `text`) i qualsevol altre camp s'ignora. Es
+        valida com en crear-la. Una `url` buida, només amb espais o `null` es
+        desa com a `null`, i el `submission_type` el recalcula el servidor: amb
+        `url` és `url` i sense és `ask`. Un cos sense cap camp editable respon
+        200 sense canvis.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de la submission.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmissionUpdate"
+      responses:
+        "200":
+          description: Submission actualitzada (sense `comments`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+        "400":
+          description: El cos no és JSON vàlid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: La submission és d'un altre usuari; no es canvia res.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: La submission no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: |
+            La nova `url` ja és d'una altra submission; no es canvia res.
+            `details.existing_submission_id` és l'id de la que ja la té.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "`title` buit o `url` amb format invàlid; `details` té els errors per camp."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [submissions]
+      operationId: deleteSubmission
+      summary: Esborra una submission pròpia.
+      description: |
+        Només el propietari. Esborra la submission amb tots els seus comments, a
+        qualsevol profunditat, i els vots, favorits i hidden que en depenen.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de la submission.
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Esborrada; la resposta no té cos.
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: La submission és d'un altre usuari; no s'esborra res.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: La submission no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /api/v1/submissions/{submissionId}/comments:
     post:
@@ -502,6 +606,26 @@ components:
               description: Comments directes, en ordre cronològic; les respostes són a `replies` de cada comment.
               items:
                 $ref: "#/components/schemas/Comment"
+
+    SubmissionUpdate:
+      type: object
+      description: |
+        Cos del PUT d'una submission. Tots els camps són opcionals i només
+        canvien els enviats; qualsevol altre camp s'ignora. No serveix per
+        crear-la (POST): allà el `title` és obligatori.
+      properties:
+        title:
+          type: string
+          description: No pot ser buit ni només espais.
+          example: "Show HN: My project"
+        url:
+          type: string
+          nullable: true
+          description: Url http(s). Buida o `null`, la submission és de tipus `ask`.
+          example: "https://github.com/foo/bar"
+        text:
+          type: string
+          nullable: true
 
     Comment:
       type: object
