@@ -73,6 +73,19 @@ module Api
         render json: SubmissionSerializer.new(submission)
       end
 
+      # DELETE /api/v1/submissions/:id
+      #
+      # Only the owner. Deletes it with all its comments at any depth, and the
+      # votes, favorites and hides that hang from them, like the web. 204
+      # without body. The body of the request is not read.
+      def destroy
+        submission = find_submission
+        authorize_owner!(submission)
+        submission.destroy!
+
+        head :no_content
+      end
+
       private
 
       # The id comes from the URL path and not from `params`, which also reads
