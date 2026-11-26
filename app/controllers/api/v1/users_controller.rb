@@ -4,10 +4,10 @@ module Api
     # API-14: profile of any user and their submissions, comments and favorites.
     # API-15: edit of the own profile.
     # API-16: upload (multipart/form-data) and reset of the avatar and banner.
-    # The other user actions (API-17) will be added here by their story.
+    # The other user actions (API-16, API-17) will be added here by their stories.
     #
-    # All of them are public, like the profile on the web: any valid api-key can
-    # see any user. An unknown user is 404 and an empty list is 200 [].
+    # The reading actions are public, like the profile on the web: any valid
+    # api-key can see any user. An unknown user is 404 and an empty list is 200 [].
     class UsersController < BaseController
       # API-16: the images of a profile (the `kind` of DELETE .../images/:kind
       # and the parts of PUT .../images).
@@ -19,6 +19,21 @@ module Api
       # user's own profile; the api-key never.
       def show
         render json: UserSerializer.new(find_user, viewer: current_user, base_url: request.base_url)
+      end
+
+      # PUT /api/v1/users/:id  { "about": "...", "email": "..." }
+      #
+      # Only your own profile (403 otherwise, checked before reading the body).
+      # Partial update: only the fields sent change and any other field
+      # (username, api_key...) is ignored. The model strips the values and stores
+      # a blank one as null. An invalid email is 422. 200 with the updated
+      # profile, email included.
+      def update
+        user = find_user
+        authorize_owner!(user)
+        user.update!(user_params)
+
+        render json: UserSerializer.new(user, viewer: current_user, base_url: request.base_url)
       end
 
       # GET /api/v1/users/:id/submissions — newest first, like /submissions?id=
@@ -45,6 +60,31 @@ module Api
       # each with its `submission`.
       def favorite_comments
         render json: CommentSerializer.flat(favorited(find_user, "Comment", %i[user submission]))
+      end
+
+      # GET /api/v1/users/:id/hidden
+      def hidden
+        user = find_user
+        authorize_owner!(user, message: "You can only see your own hidden submissions")
+
+        hides = user.hides.includes(submission: :user).order(created_at: :desc, id: :desc)
+        render json: SubmissionSerializer.list(hides.map(&:submission))
+      end
+
+      # GET /api/v1/users/:id/upvoted/submissions
+      def upvoted_submissions
+        user = find_user
+        authorize_owner!(user, message: "You can only see your own upvoted submissions")
+
+        render json: SubmissionSerializer.list(voted(user, "Submission", :user))
+      end
+
+      # GET /api/v1/users/:id/upvoted/comments
+      def upvoted_comments
+        user = find_user
+        authorize_owner!(user, message: "You can only see your own upvoted comments")
+
+        render json: CommentSerializer.flat(voted(user, "Comment", %i[user submission]))
       end
 
       # GET /api/v1/users/:id/threads
@@ -128,6 +168,12 @@ module Api
         User.find(request.path_parameters[:id])
       end
 
+      # The editable fields of the profile; the rest of the body is ignored. The
+      # User model strips them and stores a blank one as nil (`normalizes`).
+      def user_params
+        params.permit(:about, :email)
+      end
+
       # The items of `type` ("Submission" or "Comment") that `user` has marked
       # as favorite, most recently favorited first (same date: highest id
       # first), like the favorites pages of the web (USR-07).
@@ -136,6 +182,14 @@ module Api
             .order(created_at: :desc, id: :desc)
             .includes(favoritable: preload)
             .map(&:favoritable)
+      end
+
+      # The items the user voted for, most recently voted first.
+      def voted(user, type, preload)
+        user.votes.where(votable_type: type)
+            .order(created_at: :desc, id: :desc)
+            .includes(votable: preload)
+            .map(&:votable)
       end
     end
   end
