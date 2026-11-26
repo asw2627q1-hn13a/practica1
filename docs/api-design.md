@@ -23,7 +23,7 @@ documentaran DOC-01 i DOC-02 a `api/api.yaml`. Les rutes estan definides a
 | Usuari actiu | S'obté **sempre de l'api-key**, mai del cos de la petició (un `user_id` al JSON s'ignora). |
 | Actualització | `PUT` amb semàntica parcial: només es modifiquen els camps enviats i només els editables. `points`, `user`, `submission_type`, `id` i dates mai es poden modificar. (Rails també accepta `PATCH` com a àlies, però no es documenta.) |
 | Llistats | Sempre un array JSON; si no hi ha resultats, `[]` amb `200`. Sense paginació (la web tampoc en té). |
-| CORS | Habilitat per a `https://editor.swagger.io` (INF-05); ha de permetre `GET, POST, PUT, DELETE, OPTIONS` i la capçalera `X-API-KEY`. |
+| CORS | Habilitat només per a `https://editor.swagger.io` i només sota `/api/*` (INF-05, `config/initializers/cors.rb` amb la gem `rack-cors`): mètodes `GET, POST, PUT, DELETE, OPTIONS` i capçaleres `Accept`, `Content-Type` i `X-API-KEY`. El preflight `OPTIONS` el respon el middleware sense api-key. Per provar l'editor contra `localhost`, Chrome demana permís d'accés a la xarxa local (*Local Network Access*); contra l'URL desplegada no cal. |
 | Rutes inexistents | Tot el prefix `/api` és reservat a l'API: qualsevol ruta que no existeixi (`/api/v1/foo`, `/api/v2/...`, `/api/foo`) respon **404 en JSON**. Un **verb no definit sobre una ruta existent** (p. ex. `DELETE /api/v1/submissions`) també respon **404**, no 405: Rails no calcula la capçalera `Allow` i no val la pena complicar-ho. Fora de `/api`, les pàgines d'error de la web continuen sent HTML. |
 | Fora de l'API | Login, registre i logout (l'enunciat els exclou). No hi ha `POST /users` ni `DELETE /users/{id}`. |
 
@@ -34,7 +34,7 @@ documentaran DOC-01 i DOC-02 a `api/api.yaml`. Les rutes estan definides a
 | **200 OK** | GET, PUT i accions que retornen un recurs o dades (p. ex. els `points` en desvotar). |
 | **201 Created** | POST que crea un recurs. |
 | **204 No Content** | DELETE correcte sense cos. |
-| **400 Bad Request** | Cos que no és JSON vàlid, falta un paràmetre obligatori o un paràmetre de consulta té un valor no permès (p. ex. `list=foo`). |
+| **400 Bad Request** | Cos que no és JSON vàlid, falta un paràmetre obligatori (excepte el `body` en crear un comment o una resposta: 422, vegeu §2.2) o un paràmetre de consulta té un valor no permès (p. ex. `list=foo`). |
 | **401 Unauthorized** | Falta l'api-key o no correspon a cap usuari. |
 | **403 Forbidden** | L'api-key és vàlida però l'usuari no pot fer l'acció: contingut d'un altre usuari, votar el contingut propi, llistats privats d'un altre usuari. |
 | **404 Not Found** | El recurs (o el recurs pare) no existeix. També una ruta inexistent sota `/api/v1`. |
@@ -53,6 +53,10 @@ controladors de l'API:
 - `current_user` → l'usuari de l'api-key; és l'únic origen de l'usuari actiu.
 - `authorize_owner!(registre)` → 403 si el registre no és de `current_user`. Es crida dins
   de l'acció **després** de trobar el registre (així un id inexistent dona 404 abans que 403).
+  Accepta submissions i comments (propietari = `user_id`) i també un **User** (propietari = ell
+  mateix; API-15/16/17). Missatge per defecte: `You can only modify your own submissions`,
+  `... comments` o `... profile`; amb `message:` se'n pot passar un de propi (p. ex. API-17,
+  que no modifica sinó que llegeix llistats privats).
 
 ---
 
@@ -85,6 +89,10 @@ Amb `url` vàlida és tipus `url`; sense `url`, tipus `ask`. Si la `url` ja exis
 `details.existing_submission_id` (no es crea res; no s'envia `Location`, que a HTTP és per a 201/3xx).
 
 **`GET /submissions/{id}`** — la submission amb l'**arbre complet de comments** niat a `comments`.
+A tots els nivells van del més antic al més recent (amb la mateixa data, primer l'id més petit).
+També retorna una submission amagada per l'usuari de l'api-key: amagar només afecta els llistats.
+L'arbre es retorna sencer encara que sigui molt profund: a partir de 50 nivells de respostes el JSON
+supera els 100 nivells niats i alguns clients han d'apujar el seu límit per llegir-lo.
 
 ### 2.2 Comments
 
@@ -98,8 +106,12 @@ Amb `url` vàlida és tipus `url`; sense `url`, tipus `ask`. Si la `url` ja exis
 | DELETE | `/comments/{id}` | `deleteComment` | API-09 | 204 | 403, 404 |
 
 - Cos de creació i edició: `{ "body": "..." }`. Una resposta (`replies`) hereta la submission del comment pare.
+- En crear un comment o una resposta, si `body` no hi és, és `null`, buit o només té espais: **422** amb `details.body` (no 400).
 - `GET /comments` retorna els comments de tots els usuaris, del més recent al més antic, **plans** (sense arbre).
-- `GET /comments/{id}` retorna el comment amb el seu **subarbre** a `replies`.
+- `GET /comments/{id}` retorna el comment amb el seu **subarbre complet** a `replies` (només els seus descendents, a
+  qualsevol profunditat, del més antic al més recent a tots els nivells; amb la mateixa data, primer l'id més petit).
+  El comment arrel afegeix `submission` (`{ "id", "title" }`); el pare és `parent_id` (`null` en un comment directe).
+  Com a `GET /submissions/{id}`, a partir de 50 nivells de respostes el JSON supera els 100 nivells niats.
 - Esborrar un comment esborra les seves respostes (igual que la web).
 
 ### 2.3 Votes
@@ -159,7 +171,7 @@ El POST retorna `{ "hidden": true }`; el DELETE retorna 204 (a diferència de `.
 - `PUT /users/{id}` — cos `{ "about": "...", "email": "..." }`.
 - `PUT /users/{id}/images` — `multipart/form-data` amb les parts `avatar` i/o `banner` (fitxers). Retorna el perfil amb les noves `avatar_url`/`banner_url`. Si el fitxer no és PNG, JPEG, GIF o WebP, o pesa més de 5 MB: 422.
 - `DELETE /users/{id}/images/{kind}` — `kind` = `avatar` o `banner`; torna a la imatge per defecte (com a la web). Un altre valor de `kind`: 404.
-- `threads`: els comments de l'usuari amb les respostes rebudes (array de comments amb `replies`). És públic, com `/threads?id=` a la web; l'usuari de l'api-key és un cas particular.
+- `threads`: els comments de l'usuari amb les respostes rebudes (array de comments amb `replies`). `replies` són les respostes **directes** (en ordre cronològic, sense les seves pròpies respostes), com a la pàgina threads de la web; cada comment inclou també `submission`. És públic, com `/threads?id=` a la web; l'usuari de l'api-key és un cas particular.
 - `upvoted/*` i `hidden` són **privats**: només si `{id}` és l'usuari de l'api-key; si no, 403.
 - Què retornen: `hidden` → array de **Submission** amagades per l'usuari; `upvoted/submissions` → array de **Submission** votades; `upvoted/comments` → array de **Comment** (plans, amb `submission`) votats. Ordenats per data de l'acció, del més recent al més antic.
 - Tots els llistats d'usuari van del més recent al més antic (`favorites/*` i `upvoted/*`: per data de l'acció).
@@ -200,8 +212,8 @@ El POST retorna `{ "hidden": true }`; el DELETE retorna 204 (a diferència de `.
 }
 ```
 - `parent_id` és `null` en un comment directe a la submission, i l'id del comment pare en una resposta (és el que fa possible l'enllaç *parent*, COM-05).
-- A l'arbre (`GET /submissions/{id}`, `GET /comments/{id}`) cada comment afegeix `"replies": [ ... ]` en ordre cronològic (buit si no n'hi ha).
-- Als llistats plans (`GET /comments`, `/users/{id}/comments`, favorites, upvoted) afegeix `"submission": { "id": 7, "title": "..." }`.
+- A l'arbre (`GET /submissions/{id}`, `GET /comments/{id}`) cada comment afegeix `"replies": [ ... ]` en ordre cronològic (buit si no n'hi ha). També a `GET /users/{id}/threads`, però allà només amb les respostes directes.
+- Als llistats plans (`GET /comments`, `/users/{id}/comments`, favorites, upvoted), a `GET /users/{id}/threads` i al comment arrel de `GET /comments/{id}` afegeix `"submission": { "id": 7, "title": "..." }`.
 
 ### User
 ```json

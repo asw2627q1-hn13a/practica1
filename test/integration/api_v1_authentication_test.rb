@@ -18,6 +18,20 @@ class ApiAuthProbeController < Api::V1::BaseController
     submission.destroy!
     head :no_content
   end
+
+  # Com API-15/16: modificar un perfil només si és el de l'api-key.
+  def update_user
+    user = User.find(params[:id])
+    authorize_owner!(user)
+    render json: { id: user.id }
+  end
+
+  # Com API-17: llistat privat, amb un missatge de 403 propi.
+  def private_list
+    user = User.find(params[:id])
+    authorize_owner!(user, message: "You can only see your own hidden submissions")
+    render json: []
+  end
 end
 
 class ApiV1AuthenticationTest < ActionDispatch::IntegrationTest
@@ -115,6 +129,49 @@ class ApiV1AuthenticationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # --- propietari quan el registre és un User (API-15/16/17) ------------------
+
+  test "another user's api-key cannot modify a profile: 403, not 500" do
+    with_probe_routes do
+      put "/api/v1/probe/users/#{@alice.id}", headers: auth(@bob)
+
+      assert_response :forbidden
+      body = JSON.parse(response.body)
+      assert_equal "forbidden", body["error"]
+      assert_equal "You can only modify your own profile", body["message"]
+    end
+  end
+
+  test "a user's own api-key can modify their profile" do
+    with_probe_routes do
+      put "/api/v1/probe/users/#{@alice.id}", headers: auth(@alice)
+
+      assert_response :ok
+      assert_equal @alice.id, JSON.parse(response.body)["id"]
+    end
+  end
+
+  test "a missing user is 404, not 403" do
+    with_probe_routes do
+      put "/api/v1/probe/users/0", headers: auth(@bob)
+
+      assert_response :not_found
+    end
+  end
+
+  test "authorize_owner! accepts a custom 403 message" do
+    with_probe_routes do
+      get "/api/v1/probe/users/#{@alice.id}/private", headers: auth(@bob)
+
+      assert_response :forbidden
+      assert_equal "You can only see your own hidden submissions", JSON.parse(response.body)["message"]
+
+      get "/api/v1/probe/users/#{@alice.id}/private", headers: auth(@alice)
+
+      assert_response :ok
+    end
+  end
+
   # --- rutes inexistents: continuen sent 404 sense api-key --------------------
 
   test "unknown API routes still answer 404 without api-key" do
@@ -136,6 +193,8 @@ class ApiV1AuthenticationTest < ActionDispatch::IntegrationTest
         get    "/api/v1/probe",     to: "api_auth_probe#show"
         post   "/api/v1/probe",     to: "api_auth_probe#show"
         delete "/api/v1/probe/:id", to: "api_auth_probe#destroy"
+        put    "/api/v1/probe/users/:id",         to: "api_auth_probe#update_user"
+        get    "/api/v1/probe/users/:id/private", to: "api_auth_probe#private_list"
       end
       block.call
     end
