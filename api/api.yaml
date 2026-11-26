@@ -88,6 +88,58 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+    post:
+      tags: [submissions]
+      operationId: createSubmission
+      summary: Crea una submission (tipus url o ask).
+      description: |
+        Amb una `url` vàlida crea una submission de tipus url; sense `url`, de
+        tipus ask. L'autor és sempre l'usuari de l'api-key (un `user_id` al cos
+        s'ignora). Si la `url` ja existeix, retorna 409 amb
+        `details.existing_submission_id` i no crea res.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title:
+                  type: string
+                  example: "Ask HN: Best Rails tutorial?"
+                url:
+                  type: string
+                  nullable: true
+                  example: "https://github.com/foo/bar"
+                text:
+                  type: string
+                  nullable: true
+      responses:
+        "201":
+          description: Submission creada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: La url ja existeix; details.existing_submission_id té l'id de l'existent.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Validació fallida (títol buit, url amb format invàlid...).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
 components:
   securitySchemes:
