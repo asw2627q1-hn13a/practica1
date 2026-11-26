@@ -1290,6 +1290,193 @@ paths:
                 error: "not_found"
                 message: "User with id=999 not found"
 
+  /api/v1/users/{id}/hidden:
+    get:
+      tags: [users]
+      operationId: listUserHidden
+      summary: Submissions amagades de l'usuari de l'api-key.
+      description: |
+        Llistat privat de submissions amagades per l'usuari. `{id}` ha de ser
+        l'usuari de l'api-key; altrament respon 403. Ordenat per la data en què
+        s'ha amagat cada submission, de més recent a més antiga. Unhide
+        (`DELETE /api/v1/submissions/{submission_id}/hidden`) la treu del
+        llistat.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari de l'api-key.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Submissions amagades (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Submission"
+              example:
+                - id: 7
+                  title: "Show HN: My project"
+                  url: "https://github.com/foo/bar"
+                  domain: github.com
+                  text: null
+                  submission_type: url
+                  points: 12
+                  comments_count: 3
+                  user:
+                    id: 2
+                    username: alice
+                  created_at: "2026-11-20T10:00:00Z"
+                  updated_at: "2026-11-20T10:00:00Z"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: L'usuari de la ruta no és el de l'api-key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "forbidden"
+                message: "You can only see your own hidden submissions"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/users/{id}/upvoted/submissions:
+    get:
+      tags: [users]
+      operationId: listUserUpvotedSubmissions
+      summary: Submissions votades per l'usuari de l'api-key.
+      description: |
+        Llistat privat de submissions votades per l'usuari. `{id}` ha de ser
+        l'usuari de l'api-key; altrament respon 403. Ordenat per la data del vot,
+        de més recent a més antic. Unvote (`DELETE
+        /api/v1/submissions/{submission_id}/votes`) treu l'element del llistat.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari de l'api-key.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Submissions votades (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Submission"
+              example:
+                - id: 7
+                  title: "Show HN: My project"
+                  url: "https://github.com/foo/bar"
+                  domain: github.com
+                  text: null
+                  submission_type: url
+                  points: 12
+                  comments_count: 3
+                  user:
+                    id: 2
+                    username: alice
+                  created_at: "2026-11-20T10:00:00Z"
+                  updated_at: "2026-11-20T10:00:00Z"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: L'usuari de la ruta no és el de l'api-key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "forbidden"
+                message: "You can only see your own upvoted submissions"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/users/{id}/upvoted/comments:
+    get:
+      tags: [users]
+      operationId: listUserUpvotedComments
+      summary: Comments votats per l'usuari de l'api-key.
+      description: |
+        Llistat privat de comments votats per l'usuari, amb la seva submission.
+        `{id}` ha de ser l'usuari de l'api-key; altrament respon 403. Ordenat
+        per la data del vot, de més recent a més antic. Unvote (`DELETE
+        /api/v1/comments/{comment_id}/votes`) treu l'element del llistat.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari de l'api-key.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Comments votats (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+              example:
+                - id: 22
+                  body: Thanks!
+                  points: 1
+                  user:
+                    id: 2
+                    username: alice
+                  submission_id: 7
+                  parent_id: 21
+                  created_at: "2026-11-20T11:30:00Z"
+                  updated_at: "2026-11-20T11:30:00Z"
+                  submission:
+                    id: 7
+                    title: "Show HN: My project"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: L'usuari de la ruta no és el de l'api-key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "forbidden"
+                message: "You can only see your own upvoted comments"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   securitySchemes:
     apiKey:
