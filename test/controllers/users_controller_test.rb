@@ -253,7 +253,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
   test "owner uploads a new avatar" do
     log_in_as(@alice)
-    patch user_path(@alice), params: { user: { avatar: fixture_file_upload("avatar.png", "image/png", true) } }
+    patch user_path(@alice), params: { user: { avatar: fixture_file_upload("avatar.png", "image/png") } }
     assert_redirected_to user_path(@alice)
     assert_equal "avatar.png", @alice.reload.avatar.filename.to_s
   end
