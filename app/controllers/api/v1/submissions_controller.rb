@@ -1,6 +1,7 @@
 module Api
   module V1
     # API-03: list submissions (news / newest / ask) and search them by title.
+    # API-04: create a submission.
     # API-05: get a submission with its comment tree.
     # API-06: edit and delete your own submissions.
     class SubmissionsController < BaseController
@@ -32,6 +33,27 @@ module Api
 
         scope = scope.where.not(id: current_user.hides.select(:submission_id))
         render json: SubmissionSerializer.list(scope.includes(:user))
+      end
+
+      # POST /api/v1/submissions  { "title": "...", "url": "...", "text": "..." }
+      #
+      # The creator is always the api-key user. Only title, url and text are
+      # read; any other field is ignored. With a url it is a "url" submission,
+      # without one (missing, blank or null) an "ask" one. A blank title or an
+      # invalid url is 422; a url that another submission already has is 409
+      # and nothing is created (the validations go first, as in the update).
+      # 201 with the new submission.
+      def create
+        submission = current_user.submissions.new(submission_params)
+        submission.assign_type_from_url
+        submission.validate!
+
+        existing = submission_with_same_url(submission)
+        return render_url_taken(existing) if existing
+
+        submission.save!
+
+        render json: SubmissionSerializer.new(submission), status: :created
       end
 
       # GET /api/v1/submissions/:id
