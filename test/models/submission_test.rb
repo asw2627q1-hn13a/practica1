@@ -53,4 +53,18 @@ class SubmissionTest < ActiveSupport::TestCase
     submission = Submission.new(title: "Ask me", url: "", submission_type: "ask", user: users(:alice))
     assert submission.valid?
   end
+
+  # API-06 -------------------------------------------------------------------
+
+  test "destroying a submission deletes a very deep conversation" do
+    submission = submissions(:ask_one)
+    parent = nil
+    300.times do |i|
+      parent = submission.comments.create!(body: "level #{i}", user: users(:bob), parent: parent)
+    end
+
+    assert_difference -> { Comment.count } => -300 do
+      submission.destroy!
+    end
+  end
 end

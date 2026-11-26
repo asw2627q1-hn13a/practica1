@@ -1,5 +1,7 @@
 class Submission < ApplicationRecord
   belongs_to :user
+  # API-06: must be declared before has_many :comments, so it runs first.
+  before_destroy :destroy_comments_leaves_first
   has_many :comments, dependent: :destroy
   # ACT-03/05/06: actions a user can take on a submission.
   has_many :votes, as: :votable, dependent: :destroy
@@ -57,6 +59,15 @@ class Submission < ApplicationRecord
   end
 
   private
+
+  # API-06: deletes the comments from the newest to the oldest. A reply is
+  # always newer than its parent, so every comment is deleted after its
+  # replies and Comment's `dependent: :destroy` has nothing left to go down
+  # into. Without this, deleting a conversation of about 150 levels or more
+  # raises SystemStackError (one nested call per level).
+  def destroy_comments_leaves_first
+    comments.order(id: :desc).each(&:destroy!)
+  end
 
   # SUB-03: a url is valid only if it parses as http/https with a host.
   def url_must_be_http
