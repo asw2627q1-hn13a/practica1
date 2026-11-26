@@ -165,18 +165,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Submission"
+              example:
+                id: 7
+                title: "Show HN: My project"
+                url: "https://github.com/foo/bar"
+                domain: "github.com"
+                text: null
+                submission_type: "url"
+                points: 0
+                comments_count: 0
+                user:
+                  id: 2
+                  username: "alice"
+                created_at: "2026-11-20T10:00:00Z"
+                updated_at: "2026-11-20T10:00:00Z"
         "400":
           description: El cos no és JSON vàlid.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "bad_request"
+                message: "Request body is not valid JSON"
         "401":
           description: Api-key absent o invàlida.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
         "409":
           description: |
             La `url` ja és d'una altra submission; no es crea res.
@@ -185,6 +205,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "conflict"
+                message: "This URL has already been submitted"
+                details:
+                  existing_submission_id: 3
         "422":
           description: "`title` absent o buit, o `url` amb format invàlid; `details` té els errors per camp."
           content:
@@ -192,6 +217,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+              example:
+                error: "unprocessable_entity"
+                message: "Validation failed"
+                details:
+                  title: ["can't be blank"]
   /api/v1/submissions/{id}:
     get:
       tags: [submissions]
@@ -317,6 +347,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Submission"
+              example:
+                id: 7
+                title: "Show HN: My project (v2)"
+                url: "https://github.com/foo/bar"
+                domain: "github.com"
+                text: null
+                submission_type: "url"
+                points: 0
+                comments_count: 0
+                user:
+                  id: 2
+                  username: "alice"
+                created_at: "2026-11-20T10:00:00Z"
+                updated_at: "2026-11-21T09:00:00Z"
         "400":
           description: El cos no és JSON vàlid.
           content:
@@ -451,6 +495,17 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Comment"
+              example:
+                id: 24
+                body: "Great post"
+                points: 0
+                user:
+                  id: 2
+                  username: "alice"
+                submission_id: 7
+                parent_id: null
+                created_at: "2026-11-20T13:00:00Z"
+                updated_at: "2026-11-20T13:00:00Z"
         "400":
           description: El cos no és JSON vàlid.
           content:
@@ -519,6 +574,17 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Comment"
+              example:
+                id: 25
+                body: "Thanks!"
+                points: 0
+                user:
+                  id: 2
+                  username: "alice"
+                submission_id: 7
+                parent_id: 24
+                created_at: "2026-11-20T13:00:00Z"
+                updated_at: "2026-11-20T13:00:00Z"
         "400":
           description: El cos no és JSON vàlid.
           content:
@@ -587,6 +653,8 @@ paths:
                   points:
                     type: integer
                     example: 13
+              example:
+                points: 13
         "401":
           description: Api-key absent o invàlida.
           content:
@@ -649,6 +717,8 @@ paths:
                   points:
                     type: integer
                     example: 12
+              example:
+                points: 12
         "401":
           description: Api-key absent o invàlida.
           content:
@@ -703,6 +773,8 @@ paths:
                   points:
                     type: integer
                     example: 3
+              example:
+                points: 3
         "401":
           description: Api-key absent o invàlida.
           content:
@@ -763,6 +835,8 @@ paths:
                   points:
                     type: integer
                     example: 2
+              example:
+                points: 2
         "401":
           description: Api-key absent o invàlida.
           content:
@@ -819,6 +893,8 @@ paths:
                   favorited:
                     type: boolean
                     example: true
+              example:
+                favorited: true
         "401":
           description: Api-key absent o invàlida.
           content:
@@ -916,24 +992,35 @@ paths:
                   hidden:
                     type: boolean
                     example: true
+              example:
+                hidden: true
         "401":
           description: Api-key absent o invàlida.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
         "404":
           description: La submission no existeix.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "not_found"
+                message: "Submission with id=999 not found"
         "409":
           description: La submission ja estava amagada per l'usuari.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "conflict"
+                message: "This submission is already hidden"
     delete:
       tags: [hidden]
       operationId: unhideSubmission
@@ -955,6 +1042,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
         "404":
           description: La submission no existeix o no estava amagada per l'usuari.
           content:
@@ -962,6 +1052,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+              examples:
+                laSubmissionNoExisteix:
+                  summary: "La submission no existeix"
+                  value:
+                    error: "not_found"
+                    message: "Submission with id=999 not found"
+                noEstavaAmagada:
+                  summary: "No estava amagada"
+                  value:
+                    error: "not_found"
+                    message: "This submission is not hidden"
   /api/v1/comments/{commentId}/favorites:
     post:
       tags: [favorites]
@@ -989,6 +1090,8 @@ paths:
                   favorited:
                     type: boolean
                     example: true
+              example:
+                favorited: true
         "401":
           description: Api-key absent o invàlida.
           content:
@@ -1486,24 +1589,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "bad_request"
+                message: "Missing required parameter: avatar or banner"
         "401":
           description: Api-key absent o invàlida.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
         "403":
           description: L'usuari és un altre que el de l'api-key; no es canvia res.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "forbidden"
+                message: "You can only modify your own profile"
         "404":
           description: L'usuari no existeix.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
         "422":
           description: |
             Una part no és un fitxer, o el fitxer no és una imatge PNG, JPEG,
@@ -1549,18 +1664,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+              example:
+                id: 2
+                username: "alice"
+                about: "Rails developer"
+                karma: 25
+                avatar_url: "https://practica1-65h7.onrender.com/assets/default_avatar-7b942fc4.png"
+                banner_url: "https://practica1-65h7.onrender.com/assets/default_banner-1a2b3c4d.png"
+                created_at: "2026-11-01T09:00:00Z"
+                email: "alice@example.com"
         "401":
           description: Api-key absent o invàlida.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
         "403":
           description: L'usuari és un altre que el de l'api-key; no es canvia res.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "forbidden"
+                message: "You can only modify your own profile"
         "404":
           description: L'usuari no existeix o `kind` no és `avatar` ni `banner`.
           content:
@@ -1568,6 +1698,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+              examples:
+                lUsuariNoExisteix:
+                  summary: "L'usuari no existeix"
+                  value:
+                    error: "not_found"
+                    message: "User with id=999 not found"
+                elKindNosAvatarNiBanner:
+                  summary: "El kind no és avatar ni banner"
+                  value:
+                    error: "not_found"
+                    message: "Image with id=foo not found"
   /api/v1/users/{id}/submissions:
     get:
       tags: [users]
@@ -1849,6 +1990,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
         "403":
           description: L'usuari de la ruta no és el de l'api-key.
           content:
@@ -1865,6 +2009,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
   /api/v1/users/{id}/upvoted/submissions:
     get:
       tags: [users]
@@ -1911,6 +2058,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
         "403":
           description: L'usuari de la ruta no és el de l'api-key.
           content:
@@ -1927,6 +2077,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
   /api/v1/users/{id}/upvoted/comments:
     get:
       tags: [users]
@@ -1973,6 +2126,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
         "403":
           description: L'usuari de la ruta no és el de l'api-key.
           content:
@@ -1989,6 +2145,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
 components:
   securitySchemes:
     apiKey:
