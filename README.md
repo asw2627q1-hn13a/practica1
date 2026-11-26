@@ -1,3 +1,8 @@
+# Hacker News clone
+
+Clon de [Hacker News](https://news.ycombinator.com/) fet amb Ruby on Rails per a l'assignatura
+ASW (UPC). Inclou l'aplicació web i una API REST de nivell 2 documentada amb OpenAPI.
+
 ## Equip
 
 | Nom i cognoms     | Usuari de GitHub |
