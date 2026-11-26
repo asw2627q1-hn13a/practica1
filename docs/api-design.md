@@ -89,6 +89,10 @@ Amb `url` vàlida és tipus `url`; sense `url`, tipus `ask`. Si la `url` ja exis
 `details.existing_submission_id` (no es crea res; no s'envia `Location`, que a HTTP és per a 201/3xx).
 
 **`GET /submissions/{id}`** — la submission amb l'**arbre complet de comments** niat a `comments`.
+A tots els nivells van del més antic al més recent (amb la mateixa data, primer l'id més petit).
+També retorna una submission amagada per l'usuari de l'api-key: amagar només afecta els llistats.
+L'arbre es retorna sencer encara que sigui molt profund: a partir de 50 nivells de respostes el JSON
+supera els 100 nivells niats i alguns clients han d'apujar el seu límit per llegir-lo.
 
 ### 2.2 Comments
 
