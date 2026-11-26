@@ -18,6 +18,10 @@ class Api::V1::VotesTest < ActionDispatch::IntegrationTest
     { "X-API-KEY" => user.api_key }
   end
 
+  def malformed(user)
+    auth(user).merge("Content-Type" => "application/json")
+  end
+
   def json
     JSON.parse(@response.body)
   end
@@ -38,6 +42,22 @@ class Api::V1::VotesTest < ActionDispatch::IntegrationTest
 
     post "/api/v1/comments/0/votes", headers: auth(@alice)
     assert_response :not_found
+  end
+
+  # The body is never read, so a malformed one cannot turn the 404 or the 403
+  # into a 400 (docs/api-design.md §1: 401 -> 404 -> 403 -> 400).
+  test "a malformed body is ignored: 404, 403 and the vote work as without one" do
+    post "/api/v1/submissions/0/votes", params: '{"x":', headers: malformed(@alice)
+    assert_response :not_found
+    delete "/api/v1/comments/0/votes", params: '{"x":', headers: malformed(@alice)
+    assert_response :not_found
+    post "/api/v1/submissions/#{@alices_submission.id}/votes", params: '{"x":', headers: malformed(@alice)
+    assert_response :forbidden
+
+    post "/api/v1/comments/#{@bobs_comment.id}/votes", params: '{"x":', headers: malformed(@alice)
+    assert_response :created
+    delete "/api/v1/comments/#{@bobs_comment.id}/votes", params: '{"x":', headers: malformed(@alice)
+    assert_response :ok
   end
 
   # --- submissions --------------------------------------------------------------

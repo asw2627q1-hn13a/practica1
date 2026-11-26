@@ -40,12 +40,16 @@ module Api
 
       # The item comes from the URL: /submissions/:submission_id/favorites or
       # /comments/:comment_id/favorites. find raises RecordNotFound -> 404.
+      # From the path and not from `params`, which also parses the body: with a
+      # malformed JSON, `params` answers 400 before the 404 (docs/api-design.md
+      # §1: 401 -> 404 -> 403 -> 400). The body is not read.
       def set_favoritable
+        path = request.path_parameters
         @favoritable =
-          if params[:submission_id]
-            Submission.find(params[:submission_id])
+          if path[:submission_id]
+            Submission.find(path[:submission_id])
           else
-            Comment.find(params[:comment_id])
+            Comment.find(path[:comment_id])
           end
       end
 
