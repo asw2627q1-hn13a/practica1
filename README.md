@@ -23,6 +23,27 @@ Seguiment del projecte (backlog, sprints i tasques) a Taiga:
 L'aplicació està desplegada a Render:
 - https://practica1-65h7.onrender.com/
 
+## API REST
+
+### Documentació
+
+- Especificació OpenAPI: [`api/api.yaml`](api/api.yaml)
+- Disseny de l'API (recursos, URIs, codis d'estat i format d'error): [`docs/api-design.md`](docs/api-design.md)
+
+Totes les rutes comencen per `/api/v1` i totes les peticions han de portar la capçalera
+`X-API-KEY` amb l'api-key d'un usuari.
+
+### Com obtenir l'api-key
+
+1. Obre l'aplicació desplegada: https://practica1-65h7.onrender.com/
+2. Clica **login** (dalt a la dreta) i després **Sign in with GitHub**. El primer cop que
+   entres es crea el teu usuari.
+3. Clica el teu nom d'usuari, dalt a la dreta, per anar al teu perfil.
+4. Al camp **your api-key** hi ha la teva api-key. Clica-hi per seleccionar-la i copia-la.
+
+L'api-key només surt al teu propi perfil: al perfil d'un altre usuari no es mostra.
+No la comparteixis, perquè qui la tingui pot fer servir l'API en nom teu.
+
 ## Requisits
 
 - Ruby (versió indicada a `.ruby-version` / `Dockerfile`)
