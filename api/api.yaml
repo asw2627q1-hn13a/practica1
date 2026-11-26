@@ -312,6 +312,75 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /api/v1/comments/{id}:
+    get:
+      tags: [comments]
+      operationId: getComment
+      summary: Obté un comment amb el seu subarbre de respostes.
+      description: |
+        Retorna el comment amb totes les seves respostes niades a `replies`, a
+        qualsevol profunditat. Només inclou els seus descendents (ni el comment
+        pare ni els germans). A tots els nivells van del més antic al més recent
+        (amb la mateixa data, primer l'id més petit). El comment arrel inclou
+        també `submission`, la submission a la qual pertany; el comment pare és
+        `parent_id` (`null` si és un comment directe a la submission). Les
+        respostes no porten `submission`.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del comment.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: El comment amb el seu subarbre (`replies` és un array buit si no té respostes).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+              examples:
+                subarbreDeDosNivells:
+                  summary: Un comment directe amb una resposta
+                  value:
+                    id: 21
+                    body: Great post
+                    points: 2
+                    user:
+                      id: 3
+                      username: bob
+                    submission_id: 7
+                    parent_id: null
+                    created_at: "2026-11-20T11:00:00Z"
+                    updated_at: "2026-11-20T11:00:00Z"
+                    replies:
+                      - id: 22
+                        body: Thanks!
+                        points: 1
+                        user:
+                          id: 2
+                          username: alice
+                        submission_id: 7
+                        parent_id: 21
+                        created_at: "2026-11-20T11:30:00Z"
+                        updated_at: "2026-11-20T11:30:00Z"
+                        replies: []
+                    submission:
+                      id: 7
+                      title: "Show HN: My project"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: El comment no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /api/v1/users/{id}/threads:
     get:
       tags: [users]
@@ -467,7 +536,7 @@ components:
           items:
             $ref: "#/components/schemas/Comment"
         submission:
-          description: Només als llistats plans (GET /api/v1/comments, /users/{id}/comments, favorites, upvoted) i a GET /api/v1/users/{id}/threads.
+          description: Només als llistats plans (GET /api/v1/comments, /users/{id}/comments, favorites, upvoted), a GET /api/v1/users/{id}/threads i al comment arrel de GET /api/v1/comments/{id}.
           allOf:
             - $ref: "#/components/schemas/SubmissionRef"
 
