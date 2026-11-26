@@ -1,0 +1,11 @@
+<% content_for :title, "Search - Hacker News" %>
+
+<h2>Search results for "<%= @query %>"</h2>
+
+<ol class="submission-list">
+  <%= render partial: "item", collection: @submissions, as: :submission %>
+</ol>
+
+<% if @submissions.empty? %>
+  <p>No submissions found.</p>
+<% end %>

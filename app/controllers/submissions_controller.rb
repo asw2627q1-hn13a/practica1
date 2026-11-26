@@ -11,6 +11,13 @@ class SubmissionsController < ApplicationController
     @submissions = visible(Submission.of_type("url").ranked).includes(:user)
   end
 
+  # GET /search (SRC-01): search all visible submissions by title.
+  def search
+    @query = params[:q].to_s.strip
+    results = @query.present? ? Submission.search_by_title(@query) : Submission.none
+    @submissions = visible(results.ranked).includes(:user)
+  end
+
   # GET /newest (SUB-02b): all submissions, most recent first.
   def newest
     @submissions = visible(Submission.by_time).includes(:user)

@@ -20,6 +20,32 @@ class SubmissionsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/Ask HN about something/, response.body)
   end
 
+  test "search includes all submission types and ranks title matches" do
+    get search_url, params: { q: "a" }
+
+    assert_response :success
+    assert_equal [
+      submissions(:url_high).title,
+      submissions(:url_low).title,
+      submissions(:ask_one).title
+    ], css_select(".submission-title a").map(&:text)
+  end
+
+  test "search matches titles case-insensitively" do
+    get search_url, params: { q: "ASK" }
+
+    assert_response :success
+    assert_select ".submission-title a", text: "Ask HN about something"
+    assert_select ".submission", count: 1
+  end
+
+  test "search shows a message when there are no matches" do
+    get search_url, params: { q: "no matching title" }
+
+    assert_response :success
+    assert_select "p", text: "No submissions found."
+  end
+
   test "should get new" do
     get new_submission_url
     assert_response :success
