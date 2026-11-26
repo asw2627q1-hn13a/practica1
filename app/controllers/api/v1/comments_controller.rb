@@ -3,6 +3,7 @@ module Api
     # API-07: add a comment to a submission (docs/api-design.md, §2.2).
     # Replies to a comment are created by RepliesController.
     # API-10: list the latest comments of all users.
+    # API-09: edit and delete your own comments.
     class CommentsController < BaseController
       # GET /api/v1/comments
       #
@@ -25,12 +26,34 @@ module Api
         render json: CommentSerializer.new(comment), status: :created
       end
 
+      # PUT /api/v1/comments/:id  { "body": "..." }
+      #
+      # Only the author. Changes only the text: any other field of the request
+      # body is ignored, and a request body without `body` answers 200 without
+      # changes. A `body` that is null, empty or only spaces is 422. 200 with
+      # the updated comment (plain, without `replies`).
+      def update
+        comment = find_comment
+        authorize_owner!(comment)
+        comment.update!(comment_params)
+
+        render json: CommentSerializer.new(comment)
+      end
+
       private
 
       # Only the text: the author comes from the api-key and the submission from
       # the URL. Not `require`, which would answer 400 (not 422) to a blank body.
+      # Used to create (API-07) and to edit (API-09) a comment.
       def comment_params
         params.permit(:body)
+      end
+
+      # The id comes from the URL path and not from `params`, which also reads
+      # the request body: with a malformed JSON, `params` answers 400 before the
+      # 404 or the 403 (docs/api-design.md §1: 401 -> 404 -> 403 -> 400).
+      def find_comment
+        Comment.find(request.path_parameters[:id])
       end
     end
   end
