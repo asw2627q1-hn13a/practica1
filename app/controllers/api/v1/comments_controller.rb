@@ -89,7 +89,8 @@ module Api
       # 404 or the 403 (docs/api-design.md §1: 401 -> 404 -> 403 -> 400).
       def find_comment
         Comment.find(request.path_parameters[:id])
-        
+      end
+
       # `root` and its descendants, taken from `comments` (all the comments of
       # its submission) and in the same order. Not recursive, so a very deep
       # conversation cannot overflow the stack.
