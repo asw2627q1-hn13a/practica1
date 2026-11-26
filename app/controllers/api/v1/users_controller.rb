@@ -2,12 +2,14 @@ module Api
   module V1
     # API-10: threads of a user.
     # API-14: profile of any user and their submissions, comments and favorites.
-    # API-15: edit of the own profile.
+    # API-15: edit your own profile.
     # API-16: upload (multipart/form-data) and reset of the avatar and banner.
-    # The other user actions (API-16, API-17) will be added here by their stories.
+    # API-17: hidden submissions and upvoted items, only for the api-key user.
     #
-    # The reading actions are public, like the profile on the web: any valid
-    # api-key can see any user. An unknown user is 404 and an empty list is 200 [].
+    # The profile and activity listings are public, like the profile on the web:
+    # any valid api-key can see any user. The rest (edit, images, hidden,
+    # upvoted) only for the user themself (403). An unknown user is 404 and an
+    # empty list is 200 [].
     class UsersController < BaseController
       # API-16: the images of a profile (the `kind` of DELETE .../images/:kind
       # and the parts of PUT .../images).
