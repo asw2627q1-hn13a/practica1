@@ -20,8 +20,9 @@ module Api
       #
       # Only your own profile (403 otherwise, checked before reading the body).
       # Partial update: only the fields sent change and any other field
-      # (username, api_key...) is ignored. A blank value is stored as null. An
-      # invalid email is 422. 200 with the updated profile, email included.
+      # (username, api_key...) is ignored. The model strips the values and stores
+      # a blank one as null. An invalid email is 422. 200 with the updated
+      # profile, email included.
       def update
         user = find_user
         authorize_owner!(user)
@@ -83,12 +84,10 @@ module Api
         User.find(request.path_parameters[:id])
       end
 
-      # The editable fields of the profile; the rest of the body is ignored. A
-      # blank about or email (empty, only spaces or null) is stored as nil.
+      # The editable fields of the profile; the rest of the body is ignored. The
+      # User model strips them and stores a blank one as nil (`normalizes`).
       def user_params
-        attrs = params.permit(:about, :email)
-        attrs.keys.each { |key| attrs[key] = attrs[key].presence }
-        attrs
+        params.permit(:about, :email)
       end
 
       # The items of `type` ("Submission" or "Comment") that `user` has marked

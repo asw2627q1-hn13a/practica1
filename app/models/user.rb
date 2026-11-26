@@ -26,6 +26,11 @@ class User < ApplicationRecord
   validates :uid, uniqueness: { scope: :provider }
   validates :username, presence: true, uniqueness: true
 
+  # API-15 / USR-04: about and email without surrounding spaces, and nil when
+  # blank (empty or only spaces), so the web and the API store an unfilled
+  # field the same way. Runs on assignment, before the validations.
+  normalizes :about, :email, with: ->(value) { value.strip.presence }
+
   # email is blank or follows the format "something@domain"
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
 

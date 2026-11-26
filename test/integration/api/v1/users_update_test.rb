@@ -50,6 +50,16 @@ class Api::V1::UsersUpdateTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "the spaces around about and email are removed: an email with spaces is valid" do
+    put_json @alice, { about: "  Spaced  ", email: " alice@new.example.com " }
+
+    assert_response :ok
+    @alice.reload
+    assert_equal "Spaced", @alice.about
+    assert_equal "alice@new.example.com", @alice.email
+    assert_equal "alice@new.example.com", json["email"]
+  end
+
   test "fields that are not editable are ignored" do
     api_key = @alice.api_key
     put_json @alice, {

@@ -1062,9 +1062,10 @@ paths:
       description: |
         Només el propi perfil (l'usuari de l'api-key). Actualització parcial:
         només canvien els camps enviats (`about`, `email`) i qualsevol altre
-        camp (`username`, `api_key`...) s'ignora. Un valor buit, només amb
-        espais o `null` es desa com a `null`. Un cos sense cap camp editable
-        respon 200 sense canvis. Retorna el perfil actualitzat, amb `email`.
+        camp (`username`, `api_key`...) s'ignora. Es treuen els espais dels
+        extrems, i un valor buit, només amb espais o `null` es desa com a
+        `null` (igual que des de la web). Un cos sense cap camp editable respon
+        200 sense canvis. Retorna el perfil actualitzat, amb `email`.
       parameters:
         - name: id
           in: path
@@ -1142,7 +1143,7 @@ paths:
                 error: "not_found"
                 message: "User with id=999 not found"
         "422":
-          description: "`email` amb format invàlid; `details` té l'error; no es canvia res."
+          description: "`email` amb format invàlid (un cop trets els espais dels extrems); `details` té l'error; no es canvia res."
           content:
             application/json:
               schema:

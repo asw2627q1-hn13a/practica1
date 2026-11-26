@@ -68,6 +68,18 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_match "Hello, I am Alice", response.body
   end
 
+  # API-15: the web stores a blank about or email as nil, like the API.
+  test "a blank about or email from the web form is stored as nil" do
+    @alice.update_columns(about: "Old about")
+    log_in_as(@alice)
+    patch user_url(@alice), params: { user: { about: "", email: "   " } }
+
+    assert_redirected_to user_url(@alice)
+    @alice.reload
+    assert_nil @alice.about
+    assert_nil @alice.email
+  end
+
   test "user cannot open another user's edit form" do
     log_in_as(@alice)
     get edit_user_url(@bob)
