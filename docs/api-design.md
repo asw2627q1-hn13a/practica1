@@ -168,7 +168,7 @@ El POST retorna `{ "hidden": true }`; el DELETE retorna 204 (a diferència de `.
 - `PUT /users/{id}` — cos `{ "about": "...", "email": "..." }`.
 - `PUT /users/{id}/images` — `multipart/form-data` amb les parts `avatar` i/o `banner` (fitxers). Retorna el perfil amb les noves `avatar_url`/`banner_url`. Si el fitxer no és PNG, JPEG, GIF o WebP, o pesa més de 5 MB: 422.
 - `DELETE /users/{id}/images/{kind}` — `kind` = `avatar` o `banner`; torna a la imatge per defecte (com a la web). Un altre valor de `kind`: 404.
-- `threads`: els comments de l'usuari amb les respostes rebudes (array de comments amb `replies`). És públic, com `/threads?id=` a la web; l'usuari de l'api-key és un cas particular.
+- `threads`: els comments de l'usuari amb les respostes rebudes (array de comments amb `replies`). `replies` són les respostes **directes** (en ordre cronològic, sense les seves pròpies respostes), com a la pàgina threads de la web; cada comment inclou també `submission`. És públic, com `/threads?id=` a la web; l'usuari de l'api-key és un cas particular.
 - `upvoted/*` i `hidden` són **privats**: només si `{id}` és l'usuari de l'api-key; si no, 403.
 - Què retornen: `hidden` → array de **Submission** amagades per l'usuari; `upvoted/submissions` → array de **Submission** votades; `upvoted/comments` → array de **Comment** (plans, amb `submission`) votats. Ordenats per data de l'acció, del més recent al més antic.
 - Tots els llistats d'usuari van del més recent al més antic (`favorites/*` i `upvoted/*`: per data de l'acció).
@@ -209,8 +209,8 @@ El POST retorna `{ "hidden": true }`; el DELETE retorna 204 (a diferència de `.
 }
 ```
 - `parent_id` és `null` en un comment directe a la submission, i l'id del comment pare en una resposta (és el que fa possible l'enllaç *parent*, COM-05).
-- A l'arbre (`GET /submissions/{id}`, `GET /comments/{id}`) cada comment afegeix `"replies": [ ... ]` en ordre cronològic (buit si no n'hi ha).
-- Als llistats plans (`GET /comments`, `/users/{id}/comments`, favorites, upvoted) afegeix `"submission": { "id": 7, "title": "..." }`.
+- A l'arbre (`GET /submissions/{id}`, `GET /comments/{id}`) cada comment afegeix `"replies": [ ... ]` en ordre cronològic (buit si no n'hi ha). També a `GET /users/{id}/threads`, però allà només amb les respostes directes.
+- Als llistats plans (`GET /comments`, `/users/{id}/comments`, favorites, upvoted) i a `GET /users/{id}/threads` afegeix `"submission": { "id": 7, "title": "..." }`.
 
 ### User
 ```json
