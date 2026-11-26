@@ -67,7 +67,7 @@ class Api::V1::UserImagesTest < ActionDispatch::IntegrationTest
   end
 
   test "a file that is not an image is 422 and nothing is saved" do
-    put_images @alice, @alice, avatar: Rack::Test::UploadedFile.new(file_fixture("not_an_image.txt").to_s, "image/png")
+    put_images @alice, @alice, avatar: upload(file_fixture("not_an_image.txt").to_s, "image/png")
 
     assert_response :unprocessable_content
     assert_equal "unprocessable_entity", json["error"]
@@ -80,7 +80,7 @@ class Api::V1::UserImagesTest < ActionDispatch::IntegrationTest
       big.write(File.binread(file_fixture("avatar.png").to_s))
       big.write("0" * (User::MAX_IMAGE_SIZE + 1))
       big.flush
-      put_images @alice, @alice, banner: Rack::Test::UploadedFile.new(big.path, "image/png")
+      put_images @alice, @alice, banner: upload(big.path, "image/png")
     end
 
     assert_response :unprocessable_content
@@ -91,7 +91,7 @@ class Api::V1::UserImagesTest < ActionDispatch::IntegrationTest
   test "it is all or nothing: a valid avatar is not saved if the banner is invalid" do
     put_images @alice, @alice,
                avatar: png,
-               banner: Rack::Test::UploadedFile.new(file_fixture("not_an_image.txt").to_s, "image/png")
+               banner: upload(file_fixture("not_an_image.txt").to_s, "image/png")
 
     assert_response :unprocessable_content
     assert_equal [ "banner" ], json["details"].keys
@@ -203,7 +203,13 @@ class Api::V1::UserImagesTest < ActionDispatch::IntegrationTest
   private
 
   def png(name = "avatar.png")
-    Rack::Test::UploadedFile.new(file_fixture("avatar.png").to_s, "image/png", original_filename: name)
+    upload(file_fixture("avatar.png").to_s, "image/png", name)
+  end
+
+  # binary = true: without it Rack::Test opens the file in text mode, which on
+  # Windows converts the \r\n of the PNG header and corrupts the image.
+  def upload(path, content_type, name = nil)
+    Rack::Test::UploadedFile.new(path, content_type, true, original_filename: name)
   end
 
   # `as_user` is the user of the api-key; `target` the user of the URL.
