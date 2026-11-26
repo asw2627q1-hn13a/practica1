@@ -18,6 +18,10 @@ class Api::V1::FavoritesTest < ActionDispatch::IntegrationTest
     { "X-API-KEY" => user.api_key }
   end
 
+  def malformed(user)
+    auth(user).merge("Content-Type" => "application/json")
+  end
+
   def json
     JSON.parse(@response.body)
   end
@@ -38,6 +42,20 @@ class Api::V1::FavoritesTest < ActionDispatch::IntegrationTest
 
     delete "/api/v1/comments/0/favorites", headers: auth(@alice)
     assert_response :not_found
+  end
+
+  # The body is never read, so a malformed one cannot turn the 404 into a 400
+  # (docs/api-design.md §1: 401 -> 404 -> 403 -> 400).
+  test "a malformed body is ignored: 404 and the favorite work as without one" do
+    post "/api/v1/comments/0/favorites", params: '{"x":', headers: malformed(@alice)
+    assert_response :not_found
+    delete "/api/v1/submissions/0/favorites", params: '{"x":', headers: malformed(@alice)
+    assert_response :not_found
+
+    post "/api/v1/submissions/#{@bobs_submission.id}/favorites", params: '{"x":', headers: malformed(@alice)
+    assert_response :created
+    delete "/api/v1/submissions/#{@bobs_submission.id}/favorites", params: '{"x":', headers: malformed(@alice)
+    assert_response :no_content
   end
 
   # --- submissions --------------------------------------------------------------

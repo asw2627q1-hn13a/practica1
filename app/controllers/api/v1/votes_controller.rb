@@ -49,12 +49,16 @@ module Api
 
       # The voted item comes from the URL: /submissions/:submission_id/votes or
       # /comments/:comment_id/votes. find raises RecordNotFound -> 404.
+      # From the path and not from `params`, which also parses the body: with a
+      # malformed JSON, `params` answers 400 before the 404 or the 403
+      # (docs/api-design.md §1: 401 -> 404 -> 403 -> 400). The body is not read.
       def set_votable
+        path = request.path_parameters
         @votable =
-          if params[:submission_id]
-            Submission.find(params[:submission_id])
+          if path[:submission_id]
+            Submission.find(path[:submission_id])
           else
-            Comment.find(params[:comment_id])
+            Comment.find(path[:comment_id])
           end
       end
 
