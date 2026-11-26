@@ -915,6 +915,307 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  # API-14: perfil de qualsevol usuari i la seva activitat. Tot és públic (com el
+  # perfil de la web): qualsevol api-key vàlida pot consultar qualsevol usuari.
+  /api/v1/users/{id}:
+    get:
+      tags: [users]
+      operationId: getUser
+      summary: Obté el perfil d'un usuari.
+      description: |
+        Retorna el perfil de qualsevol usuari. `avatar_url` i `banner_url` són
+        URL absolutes: la imatge pujada o, si no n'hi ha, la imatge per defecte.
+        L'`email` només s'inclou quan l'usuari és el de l'api-key; l'api-key no
+        s'inclou mai.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: El perfil de l'usuari.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+              examples:
+                unAltreUsuari:
+                  summary: Perfil d'un altre usuari (sense email)
+                  value:
+                    id: 3
+                    username: bob
+                    about: "Rails developer"
+                    karma: 42
+                    avatar_url: "https://practica1-65h7.onrender.com/rails/active_storage/blobs/redirect/eyJfcmFpbHMi.../avatar.png"
+                    banner_url: "https://practica1-65h7.onrender.com/assets/default_banner-1a2b3c4d.png"
+                    created_at: "2026-11-01T09:00:00Z"
+                elPropi:
+                  summary: El perfil propi (amb email)
+                  value:
+                    id: 2
+                    username: alice
+                    about: null
+                    karma: 25
+                    avatar_url: "https://practica1-65h7.onrender.com/assets/default_avatar-7b942fc4.png"
+                    banner_url: "https://practica1-65h7.onrender.com/assets/default_banner-1a2b3c4d.png"
+                    created_at: "2026-11-01T09:00:00Z"
+                    email: alice@example.com
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
+
+  /api/v1/users/{id}/submissions:
+    get:
+      tags: [users]
+      operationId: listUserSubmissions
+      summary: Submissions d'un usuari.
+      description: |
+        Les submissions creades per l'usuari, de la més recent a la més antiga.
+        No s'exclouen les que l'usuari de l'api-key ha amagat (amagar només
+        afecta els llistats generals de `GET /api/v1/submissions`). Si no en té
+        cap, retorna un array buit amb 200.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Submissions de l'usuari (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Submission"
+              example:
+                - id: 7
+                  title: "Show HN: My project"
+                  url: "https://github.com/foo/bar"
+                  domain: github.com
+                  text: null
+                  submission_type: url
+                  points: 12
+                  comments_count: 3
+                  user:
+                    id: 2
+                    username: alice
+                  created_at: "2026-11-20T10:00:00Z"
+                  updated_at: "2026-11-20T10:00:00Z"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
+
+  /api/v1/users/{id}/comments:
+    get:
+      tags: [users]
+      operationId: listUserComments
+      summary: Comments d'un usuari.
+      description: |
+        Els comments escrits per l'usuari (directes i respostes), del més recent
+        al més antic, en llista plana; cada un amb la submission a la qual
+        pertany (`submission`). Si no en té cap, retorna un array buit amb 200.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Comments de l'usuari (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+              example:
+                - id: 22
+                  body: Thanks!
+                  points: 1
+                  user:
+                    id: 2
+                    username: alice
+                  submission_id: 7
+                  parent_id: 21
+                  created_at: "2026-11-20T11:30:00Z"
+                  updated_at: "2026-11-20T11:30:00Z"
+                  submission:
+                    id: 7
+                    title: "Show HN: My project"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
+
+  /api/v1/users/{id}/favorites/submissions:
+    get:
+      tags: [users, favorites]
+      operationId: listUserFavoriteSubmissions
+      summary: Submissions favorites d'un usuari.
+      description: |
+        Les submissions que l'usuari ha marcat com a favorites, de la marcada
+        més recentment a la més antiga (per la data del favorit, no de la
+        submission). Si no en té cap, retorna un array buit amb 200.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Submissions favorites de l'usuari (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Submission"
+              example:
+                - id: 5
+                  title: "A beginner's guide to object storage"
+                  url: "https://docs.example.com/object-storage"
+                  domain: docs.example.com
+                  text: null
+                  submission_type: url
+                  points: 9
+                  comments_count: 0
+                  user:
+                    id: 3
+                    username: bob
+                  created_at: "2026-11-19T08:30:00Z"
+                  updated_at: "2026-11-19T08:30:00Z"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
+
+  /api/v1/users/{id}/favorites/comments:
+    get:
+      tags: [users, favorites]
+      operationId: listUserFavoriteComments
+      summary: Comments favorits d'un usuari.
+      description: |
+        Els comments que l'usuari ha marcat com a favorits, del marcat més
+        recentment al més antic (per la data del favorit), en llista plana i
+        cada un amb la seva `submission`. Si no en té cap, retorna un array buit
+        amb 200.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de l'usuari.
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Comments favorits de l'usuari (pot ser buida).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+              example:
+                - id: 21
+                  body: Great post
+                  points: 2
+                  user:
+                    id: 3
+                    username: bob
+                  submission_id: 7
+                  parent_id: null
+                  created_at: "2026-11-20T11:00:00Z"
+                  updated_at: "2026-11-20T11:00:00Z"
+                  submission:
+                    id: 7
+                    title: "Show HN: My project"
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "unauthorized"
+                message: "API key is missing or invalid"
+        "404":
+          description: L'usuari no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "not_found"
+                message: "User with id=999 not found"
+
 components:
   securitySchemes:
     apiKey:
@@ -1088,6 +1389,10 @@ components:
 
     User:
       type: object
+      description: |
+        Perfil d'usuari (docs/api-design.md §3). Els camps de `required` hi són
+        sempre; `email` només per a l'usuari propietari.
+      required: [id, username, about, karma, avatar_url, banner_url, created_at]
       properties:
         id:
           type: integer
@@ -1097,6 +1402,8 @@ components:
           example: alice
         about:
           type: string
+          nullable: true
+          description: "`null` si l'usuari no l'ha omplert."
           example: "Hi!"
         karma:
           type: integer
