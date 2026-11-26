@@ -72,7 +72,7 @@ Les URIs són relatives a `/api/v1`. `operationId` és el nom que han de tenir a
 | GET | `/submissions` | `listSubmissions` | API-03 | 200 | — |
 | POST | `/submissions` | `createSubmission` | API-04 | 201 | 409, 422 |
 | GET | `/submissions/{id}` | `getSubmission` | API-05 | 200 | 404 |
-| PUT | `/submissions/{id}` | `updateSubmission` | API-06 | 200 | 403, 404, 422 |
+| PUT | `/submissions/{id}` | `updateSubmission` | API-06 | 200 | 403, 404, 409, 422 |
 | DELETE | `/submissions/{id}` | `deleteSubmission` | API-06 | 204 | 403, 404 |
 
 **`GET /submissions`** — query params:
@@ -93,6 +93,19 @@ A tots els nivells van del més antic al més recent (amb la mateixa data, prime
 També retorna una submission amagada per l'usuari de l'api-key: amagar només afecta els llistats.
 L'arbre es retorna sencer encara que sigui molt profund: a partir de 50 nivells de respostes el JSON
 supera els 100 nivells niats i alguns clients han d'apujar el seu límit per llegir-lo.
+
+**`PUT /submissions/{id}`** — només el propietari. Cos `{ "title": "...", "url": "...", "text": "..." }`, tots
+opcionals: només canvien els camps enviats i la resta s'ignoren; sense cap camp editable (`{}`) respon 200 sense canvis.
+Retorna la submission actualitzada (sense `comments`). Es valida com en crear-la: `title` buit o `url` amb format
+invàlid → 422. Una `url` buida, només amb espais o `null` es desa com a `null`, i el servidor recalcula
+`submission_type` (amb `url` → `url`, sense → `ask`). Si la nova `url` ja és d'una altra submission, encara que sigui
+del mateix usuari: **409** amb `details.existing_submission_id` i no es canvia res (si la `url` no canvia, no es
+comprova). Si un cos té alhora errors de validació i una url repetida, respon 422.
+
+**`DELETE /submissions/{id}`** — només el propietari. Esborra la submission amb tots els seus comments, a qualsevol
+profunditat, i els vots, favorits i hidden que en depenen (igual que la web). 204 sense cos.
+
+A `PUT` i `DELETE` l'id es llegeix de la ruta: un JSON mal format respon 400 només després del 404 i del 403.
 
 ### 2.2 Comments
 
@@ -320,6 +333,7 @@ decisions següents; un cop aprovada, es considera tancat i només es canvia per
 - [ ] Pujada d'imatges a `PUT /users/{id}/images` separat del `PUT /users/{id}` perquè només aquest sigui `multipart/form-data`.
 - [ ] **Canvi de comportament respecte a la web:** la web és idempotent (votar/amagar/marcar dues vegades, desvotar sense vot, o votar el contingut propi s'ignoren en silenci i redirigeixen), però l'API és estricta (409, 404 i 403) perquè un client d'API necessita saber si l'acció ha fet efecte. La web no canvia.
 - [ ] El 409 de url duplicada no envia `Location`; n'hi ha prou amb `details.existing_submission_id`.
+- [ ] Editar una submission amb una url que ja té una altra → **409**, com en crear-la (la web, en editar, ho permet).
 - [ ] Un verb no definit sobre una ruta existent respon 404 (no 405 amb `Allow`).
 - [ ] Tot `/api/*` que no existeix respon 404 en JSON.
 - [ ] Sense paginació.
