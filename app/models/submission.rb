@@ -1,8 +1,9 @@
 class Submission < ApplicationRecord
   belongs_to :user
-  # API-06: must be declared before has_many :comments, so it runs first.
-  before_destroy :destroy_comments_leaves_first
   has_many :comments, dependent: :destroy
+  # API-06: `prepend: true` makes it run before the `dependent: :destroy` of
+  # has_many :comments, wherever it is declared in this file.
+  before_destroy :destroy_comments_leaves_first, prepend: true
   # ACT-03/05/06: actions a user can take on a submission.
   has_many :votes, as: :votable, dependent: :destroy
   has_many :favorites, as: :favoritable, dependent: :destroy
