@@ -126,6 +126,17 @@ class Api::V1::UserImagesTest < ActionDispatch::IntegrationTest
     assert_not @bob.reload.avatar.attached?
   end
 
+  # 401 -> 404 -> 403 -> 400: the 403 goes before the body is read, so a
+  # malformed body must not turn it into a 400.
+  test "the images of another user are 403 even with a malformed body" do
+    put "/api/v1/users/#{@bob.id}/images",
+        params: '{"avatar":',
+        headers: { "X-API-KEY" => @alice.api_key, "Content-Type" => "application/json" }
+
+    assert_response :forbidden
+    assert_not @bob.reload.avatar.attached?
+  end
+
   test "an unknown user is 404, before any other check" do
     put "/api/v1/users/0/images", params: { avatar: png }, headers: { "X-API-KEY" => @alice.api_key }
 
@@ -186,6 +197,12 @@ class Api::V1::UserImagesTest < ActionDispatch::IntegrationTest
 
     assert_response :forbidden
     assert_equal "avatar.png", @bob.reload.avatar.filename.to_s
+  end
+
+  test "DELETE with another kind on another user is 404, before the 403" do
+    delete "/api/v1/users/#{@bob.id}/images/foo", headers: { "X-API-KEY" => @alice.api_key }
+
+    assert_response :not_found
   end
 
   test "DELETE on an unknown user is 404" do

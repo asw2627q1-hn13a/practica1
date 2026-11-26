@@ -2,8 +2,9 @@ module Api
   module V1
     # API-10: threads of a user.
     # API-14: profile of any user and their submissions, comments and favorites.
+    # API-15: edit of the own profile.
     # API-16: upload (multipart/form-data) and reset of the avatar and banner.
-    # The other user actions (API-15, API-17) will be added here by their stories.
+    # The other user actions (API-17) will be added here by their story.
     #
     # All of them are public, like the profile on the web: any valid api-key can
     # see any user. An unknown user is 404 and an empty list is 200 [].
