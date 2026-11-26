@@ -44,6 +44,18 @@ Totes les rutes comencen per `/api/v1` i totes les peticions han de portar la ca
 L'api-key només surt al teu propi perfil: al perfil d'un altre usuari no es mostra.
 No la comparteixis, perquè qui la tingui pot fer servir l'API en nom teu.
 
+### Provar l'API amb l'editor de Swagger
+
+1. Obre https://editor.swagger.io/.
+2. Copia tot el contingut de [`api/api.yaml`](api/api.yaml) i enganxa'l a l'editor, substituint
+   el que hi hagi.
+3. Al desplegable **Servers**, tria `https://practica1-65h7.onrender.com`.
+4. Clica **Authorize**, enganxa l'api-key al camp de valor i clica **Authorize** i després **Close**.
+5. Obre qualsevol endpoint, clica **Try it out** i després **Execute**.
+
+> Render (pla gratuït) atura l'aplicació quan fa estona que no rep peticions, i la primera
+> petició pot trigar fins a un minut. Obre l'aplicació al navegador abans de començar.
+
 ## Requisits
 
 - Ruby (versió indicada a `.ruby-version` / `Dockerfile`)
