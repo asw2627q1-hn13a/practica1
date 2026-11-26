@@ -59,10 +59,40 @@ class Api::V1::SubmissionsIndexTest < ActionDispatch::IntegrationTest
     assert_equal [], JSON.parse(@response.body)
   end
 
-  test "submissions hidden by the api-key user are excluded" do
-    @alice.hides.create!(submission: submissions(:url_high))
-    get "/api/v1/submissions", headers: @headers
-    assert_not_includes titles(@response), submissions(:url_high).title
+  test "hidden submissions are excluded from all lists only for the api-key user" do
+    hidden_url = submissions(:url_high)
+    hidden_ask = submissions(:ask_one)
+    @alice.hides.create!(submission: hidden_url)
+    @alice.hides.create!(submission: hidden_ask)
+
+    {
+      "news" => [ hidden_url ],
+      "newest" => [ hidden_url, hidden_ask ],
+      "ask" => [ hidden_ask ]
+    }.each do |list, hidden_submissions|
+      get "/api/v1/submissions", params: { list: list }, headers: @headers
+
+      assert_response :success
+      ids = JSON.parse(response.body).map { |submission| submission["id"] }
+      hidden_submissions.each do |submission|
+        assert_not_includes ids, submission.id
+      end
+    end
+
+    bob_headers = { "X-API-KEY" => users(:bob).api_key }
+    {
+      "news" => [ hidden_url ],
+      "newest" => [ hidden_url, hidden_ask ],
+      "ask" => [ hidden_ask ]
+    }.each do |list, visible_submissions|
+      get "/api/v1/submissions", params: { list: list }, headers: bob_headers
+
+      assert_response :success
+      ids = JSON.parse(response.body).map { |submission| submission["id"] }
+      visible_submissions.each do |submission|
+        assert_includes ids, submission.id
+      end
+    end
   end
 
   test "each submission includes the documented fields" do
