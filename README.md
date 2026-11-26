@@ -1,3 +1,8 @@
+# Hacker News clone
+
+Clon de [Hacker News](https://news.ycombinator.com/) fet amb Ruby on Rails per a l'assignatura
+ASW (UPC). Inclou l'aplicació web i una API REST de nivell 2 documentada amb OpenAPI.
+
 ## Equip
 
 | Nom i cognoms     | Usuari de GitHub |
@@ -17,6 +22,39 @@ Seguiment del projecte (backlog, sprints i tasques) a Taiga:
 
 L'aplicació està desplegada a Render:
 - https://practica1-65h7.onrender.com/
+
+## API REST
+
+### Documentació
+
+- Especificació OpenAPI: [`api/api.yaml`](api/api.yaml)
+- Disseny de l'API (recursos, URIs, codis d'estat i format d'error): [`docs/api-design.md`](docs/api-design.md)
+
+Totes les rutes comencen per `/api/v1` i totes les peticions han de portar la capçalera
+`X-API-KEY` amb l'api-key d'un usuari.
+
+### Com obtenir l'api-key
+
+1. Obre l'aplicació desplegada: https://practica1-65h7.onrender.com/
+2. Clica **login** (dalt a la dreta) i després **Sign in with GitHub**. El primer cop que
+   entres es crea el teu usuari.
+3. Clica el teu nom d'usuari, dalt a la dreta, per anar al teu perfil.
+4. Al camp **your api-key** hi ha la teva api-key. Clica-hi per seleccionar-la i copia-la.
+
+L'api-key només surt al teu propi perfil: al perfil d'un altre usuari no es mostra.
+No la comparteixis, perquè qui la tingui pot fer servir l'API en nom teu.
+
+### Provar l'API amb l'editor de Swagger
+
+1. Obre https://editor.swagger.io/.
+2. Copia tot el contingut de [`api/api.yaml`](api/api.yaml) i enganxa'l a l'editor, substituint
+   el que hi hagi.
+3. Al desplegable **Servers**, tria `https://practica1-65h7.onrender.com`.
+4. Clica **Authorize**, enganxa l'api-key al camp de valor i clica **Authorize** i després **Close**.
+5. Obre qualsevol endpoint, clica **Try it out** i després **Execute**.
+
+> Render (pla gratuït) atura l'aplicació quan fa estona que no rep peticions, i la primera
+> petició pot trigar fins a un minut. Obre l'aplicació al navegador abans de començar.
 
 ## Requisits
 
