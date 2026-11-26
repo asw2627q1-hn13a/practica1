@@ -645,6 +645,80 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  # API-13: amagar és propi de cada usuari i només afecta els llistats.
+  /api/v1/submissions/{submissionId}/hidden:
+    post:
+      tags: [hidden]
+      operationId: hideSubmission
+      summary: Amaga una submission dels llistats propis.
+      description: |
+        Amaga la submission per a l'usuari de l'api-key. No afecta els llistats
+        d'altres usuaris ni la consulta individual de la submission.
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          description: Id de la submission.
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Submission amagada.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [hidden]
+                properties:
+                  hidden:
+                    type: boolean
+                    example: true
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: La submission no existeix.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: La submission ja estava amagada per l'usuari.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [hidden]
+      operationId: unhideSubmission
+      summary: Torna a mostrar una submission als llistats propis.
+      description: Respon 204 sense cos.
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          description: Id de la submission.
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Submission tornada a mostrar.
+        "401":
+          description: Api-key absent o invàlida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: La submission no existeix o no estava amagada per l'usuari.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /api/v1/comments/{commentId}/favorites:
     post:
       tags: [favorites]
