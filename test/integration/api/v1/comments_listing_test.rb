@@ -82,6 +82,20 @@ class Api::V1::CommentsListingTest < ActionDispatch::IntegrationTest
     assert_equal [ comments(:reply_to_first).id, later.id ], first["replies"].map { |r| r["id"] }
   end
 
+  test "threads only include direct replies, not replies to replies" do
+    nested = comments(:reply_to_first).replies.create!(body: "nested", user: @alice, submission: submissions(:url_high))
+
+    get "/api/v1/users/#{@alice.id}/threads", headers: @headers
+
+    first = json.find { |c| c["id"] == comments(:first).id }
+    assert_equal [ comments(:reply_to_first).id ], first["replies"].map { |r| r["id"] }
+    assert_not first["replies"].first.key?("replies")
+    # The nested reply is alice's own comment, so it is a thread of its own,
+    # and it carries the (empty) replies of its own.
+    own = json.find { |c| c["id"] == nested.id }
+    assert_equal [], own["replies"]
+  end
+
   test "threads are public: another user's api-key can read them" do
     get "/api/v1/users/#{@alice.id}/threads", headers: { "X-API-KEY" => @bob.api_key }
 

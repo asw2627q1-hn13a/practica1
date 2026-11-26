@@ -205,8 +205,8 @@ El POST retorna `{ "hidden": true }`; el DELETE retorna 204 (a diferència de `.
 }
 ```
 - `parent_id` és `null` en un comment directe a la submission, i l'id del comment pare en una resposta (és el que fa possible l'enllaç *parent*, COM-05).
-- A l'arbre (`GET /submissions/{id}`, `GET /comments/{id}`) cada comment afegeix `"replies": [ ... ]` en ordre cronològic (buit si no n'hi ha).
-- Als llistats plans (`GET /comments`, `/users/{id}/comments`, favorites, upvoted) afegeix `"submission": { "id": 7, "title": "..." }`.
+- A l'arbre (`GET /submissions/{id}`, `GET /comments/{id}`) cada comment afegeix `"replies": [ ... ]` en ordre cronològic (buit si no n'hi ha). També a `GET /users/{id}/threads`, però allà només amb les respostes directes.
+- Als llistats plans (`GET /comments`, `/users/{id}/comments`, favorites, upvoted) i a `GET /users/{id}/threads` afegeix `"submission": { "id": 7, "title": "..." }`.
 
 ### User
 ```json

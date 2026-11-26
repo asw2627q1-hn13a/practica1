@@ -3,7 +3,7 @@ module Api
     # JSON representation of a comment (see docs/api-design.md §3).
     # Reused by the comment endpoints (API-07..10). `as_json` has only the
     # common fields; the flat listings add `submission` (`flat`) and the
-    # threads add `replies` (`with_replies`).
+    # threads add `submission` and `replies` (`thread`).
     class CommentSerializer
       def self.list(comments)
         comments.map { |comment| new(comment).as_json }
@@ -15,10 +15,11 @@ module Api
         comments.map { |comment| new(comment).as_json.merge(submission: submission_ref(comment)) }
       end
 
-      # API-10: a comment with the replies it received (already loaded and
-      # ordered by the caller; they are plain comments, without their own replies).
-      def self.with_replies(comment, replies)
-        new(comment).as_json.merge(replies: list(replies))
+      # API-10: a comment of GET /users/:id/threads: adds the submission it
+      # belongs to and the replies it received (already loaded and ordered by
+      # the caller; they are plain comments, without their own replies).
+      def self.thread(comment, replies)
+        new(comment).as_json.merge(submission: submission_ref(comment), replies: list(replies))
       end
 
       def self.submission_ref(comment)

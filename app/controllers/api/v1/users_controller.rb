@@ -17,8 +17,7 @@ module Api
                                    .group_by(&:parent_id)
 
         render json: comments.map { |comment|
-          CommentSerializer.with_replies(comment, replies_by_parent.fetch(comment.id, []))
-            .merge(submission: CommentSerializer.submission_ref(comment))
+          CommentSerializer.thread(comment, replies_by_parent.fetch(comment.id, []))
         }
       end
     end

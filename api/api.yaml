@@ -362,11 +362,11 @@ components:
           format: date-time
         replies:
           type: array
-          description: Només a l'arbre (GET /api/v1/submissions/{id}, GET /api/v1/comments/{id}), en ordre cronològic.
+          description: Només a l'arbre (GET /api/v1/submissions/{id}, GET /api/v1/comments/{id}), en ordre cronològic, i a GET /api/v1/users/{id}/threads (només les respostes directes).
           items:
             $ref: "#/components/schemas/Comment"
         submission:
-          description: Només als llistats plans (GET /api/v1/comments, /users/{id}/comments, favorites, upvoted).
+          description: Només als llistats plans (GET /api/v1/comments, /users/{id}/comments, favorites, upvoted) i a GET /api/v1/users/{id}/threads.
           allOf:
             - $ref: "#/components/schemas/SubmissionRef"
 
