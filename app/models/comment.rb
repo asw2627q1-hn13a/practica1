@@ -6,6 +6,8 @@ class Comment < ApplicationRecord
 
   # COM-02: a comment can be a reply to another comment, at any depth.
   belongs_to :parent, class_name: "Comment", optional: true
+  # API-09: must be declared before has_many :replies, so it runs first.
+  before_destroy :destroy_replies_leaves_first
   has_many :replies, class_name: "Comment", foreign_key: :parent_id, dependent: :destroy
   # ACT-04/05: actions a user can take on a comment.
   has_many :votes, as: :votable, dependent: :destroy
@@ -34,6 +36,36 @@ class Comment < ApplicationRecord
   end
 
   private
+
+  # API-09: deletes every descendant from the deepest level up, so each one has
+  # no replies left when it is deleted and `dependent: :destroy` has nothing to
+  # go down into. Without this, deleting a conversation of about 150 levels or
+  # more raises SystemStackError (one nested call per level). The order comes
+  # from the tree, not from the ids. A comment without replies (each of the
+  # descendants, when its turn comes) only costs one query.
+  def destroy_replies_leaves_first
+    return unless replies.exists?
+
+    Comment.where(id: descendant_ids).index_by(&:id)
+           .values_at(*descendant_ids.reverse).each(&:destroy!)
+  end
+
+  # Ids of all the replies under this comment, level by level (parents before
+  # their replies). One query for the whole submission, then walked in Ruby.
+  def descendant_ids
+    @descendant_ids ||= begin
+      children = Comment.where(submission_id: submission_id).pluck(:parent_id, :id)
+                        .group_by(&:first).transform_values { |pairs| pairs.map(&:last) }
+      ids = []
+      queue = [ id ]
+      until queue.empty?
+        kids = children.fetch(queue.shift, [])
+        ids.concat(kids)
+        queue.concat(kids)
+      end
+      ids
+    end
+  end
 
   # A reply must hang under a comment of the same submission, so the tree
   # can't be corrupted by pointing a reply at an unrelated submission.

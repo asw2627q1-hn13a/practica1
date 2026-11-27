@@ -24,6 +24,24 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", edit_user_path(@alice), count: 0
   end
 
+  # API-01
+  test "own profile shows the api-key" do
+    log_in_as(@alice)
+    get user_url(@alice)
+    assert_includes @response.body, @alice.api_key
+  end
+
+  test "another user's profile does not show their api-key" do
+    log_in_as(@bob)
+    get user_url(@alice)
+    assert_not_includes @response.body, @alice.api_key
+  end
+
+  test "a logged-out visitor does not see any api-key" do
+    get user_url(@alice)
+    assert_not_includes @response.body, @alice.api_key
+  end
+
   # USR-04
   test "edit requires login" do
     get edit_user_url(@alice)
@@ -48,6 +66,18 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to user_url(@alice)
     follow_redirect!
     assert_match "Hello, I am Alice", response.body
+  end
+
+  # API-15: the web stores a blank about or email as nil, like the API.
+  test "a blank about or email from the web form is stored as nil" do
+    @alice.update_columns(about: "Old about")
+    log_in_as(@alice)
+    patch user_url(@alice), params: { user: { about: "", email: "   " } }
+
+    assert_redirected_to user_url(@alice)
+    @alice.reload
+    assert_nil @alice.about
+    assert_nil @alice.email
   end
 
   test "user cannot open another user's edit form" do
@@ -223,7 +253,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
   test "owner uploads a new avatar" do
     log_in_as(@alice)
-    patch user_path(@alice), params: { user: { avatar: fixture_file_upload("avatar.png", "image/png") } }
+    patch user_path(@alice), params: { user: { avatar: fixture_file_upload("avatar.png", "image/png", true) } }
     assert_redirected_to user_path(@alice)
     assert_equal "avatar.png", @alice.reload.avatar.filename.to_s
   end

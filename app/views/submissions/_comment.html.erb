@@ -6,6 +6,8 @@
     <%= pluralize(comment.points, "point") %>
     <%# COM-04: the creation time links to the comment's own page. %>
     <%= link_to "#{time_ago_in_words(comment.created_at)} ago", comment_path(comment) %>
+    <%# COM-05: "parent" -> parent comment (if a reply) or the submission. %>
+    | <%= link_to "parent", comment_parent_path(comment) %>
   </div>
   <div class="comment-body"><%= simple_format(comment.body) %></div>
 

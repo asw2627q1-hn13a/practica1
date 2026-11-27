@@ -1,6 +1,9 @@
 class Submission < ApplicationRecord
   belongs_to :user
   has_many :comments, dependent: :destroy
+  # API-06: `prepend: true` makes it run before the `dependent: :destroy` of
+  # has_many :comments, wherever it is declared in this file.
+  before_destroy :destroy_comments_leaves_first, prepend: true
   # ACT-03/05/06: actions a user can take on a submission.
   has_many :votes, as: :votable, dependent: :destroy
   has_many :favorites, as: :favoritable, dependent: :destroy
@@ -19,6 +22,9 @@ class Submission < ApplicationRecord
   # Newest: most recent first.
   scope :by_time, -> { order(created_at: :desc) }
   scope :of_type, ->(type) { where(submission_type: type) }
+  scope :search_by_title, ->(query) {
+    where("LOWER(title) LIKE ?", "%#{sanitize_sql_like(query.downcase)}%")
+  }
 
   # SUB-02: type depends on whether a url was provided.
   # url present -> "url"; url blank -> "ask".
@@ -54,6 +60,15 @@ class Submission < ApplicationRecord
   end
 
   private
+
+  # API-06: deletes the comments from the newest to the oldest. A reply is
+  # always newer than its parent, so every comment is deleted after its
+  # replies and Comment's `dependent: :destroy` has nothing left to go down
+  # into. Without this, deleting a conversation of about 150 levels or more
+  # raises SystemStackError (one nested call per level).
+  def destroy_comments_leaves_first
+    comments.order(id: :desc).each(&:destroy!)
+  end
 
   # SUB-03: a url is valid only if it parses as http/https with a host.
   def url_must_be_http
